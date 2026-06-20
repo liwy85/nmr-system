@@ -321,6 +321,31 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
   var USE_API = true;
   var DATA = [];
 
+  // 带重试的 fetch（应对 Render 免费版冷启动 404）
+  function apiFetch(url, opts, retries, delay){
+    retries = retries || 3;
+    delay = delay || 2000;
+    return new Promise(function(resolve, reject){
+      function attempt(n){
+        fetch(url, opts).then(function(r){
+          if(r.status === 404 && n < retries){
+            // 冷启动 404，等待后重试
+            setTimeout(function(){ attempt(n+1); }, delay);
+          } else {
+            resolve(r);
+          }
+        }).catch(function(e){
+          if(n < retries){
+            setTimeout(function(){ attempt(n+1); }, delay);
+          } else {
+            reject(e);
+          }
+        });
+      }
+      attempt(0);
+    });
+  }
+
   var SOLVENTS = [
     {n:'无溶剂',                p:0},
     {n:'氘代氯仿(CDCl₃)',     p:0},
@@ -657,7 +682,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     if(!DATA) DATA=[];
     try { localStorage.setItem('nmrData', JSON.stringify(DATA)); } catch(e){}
     if(USE_API){
-      fetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
+      apiFetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
     }
   }
 
@@ -814,7 +839,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
   window.delRow=function(id){
     showConfirm('确定删除？', function(){
       DATA=DATA.filter(function(r){return r.id!==id;});
-      if(USE_API) fetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+      if(USE_API) apiFetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
       save(); render();
     });
   };
@@ -828,7 +853,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
       for(var i=0;i<cks.length;i++){
         var id = cks[i].getAttribute('data-id');
         ids.push(id);
-        if(USE_API) fetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+        if(USE_API) apiFetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
       }
       DATA=DATA.filter(function(r){return ids.indexOf(r.id)===-1;});
       save(); render();
@@ -1391,7 +1416,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
   function init(){
     loadPersonLists();
     if(USE_API){
-      fetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
+      apiFetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
         if(res.success){
           DATA=res.data;
           DATA.forEach(function(r){
