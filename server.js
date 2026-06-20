@@ -97,6 +97,11 @@ app.delete('/api/rows/:id', function(req, res) {
 // ===== 静态文件服务 =====
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 显式首页路由（确保始终返回 index.html）
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // SPA 回退：所有非 API、非静态文件请求返回 index.html
 app.get('*', function(req, res) {
   if (req.path.indexOf('/api/') === 0) {
