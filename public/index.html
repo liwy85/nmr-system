@@ -187,6 +187,20 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 .testitem-dropdown .ti-item:hover { background:#f0f0ff; }
 .testitem-dropdown .ti-group-label { padding:4px 12px; font-size:13px; color:#4a148c; font-weight:600; border-bottom:1px solid #e0e0e0; margin-top:2px; }
 .testitem-dropdown .ti-all { border-bottom:1px solid #e0e0e0; margin-bottom:2px; padding:5px 12px; display:flex; align-items:center; gap:6px; }
+
+/* Toast 通知 */
+.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-60px); background:#333; color:#fff; padding:10px 24px; border-radius:8px; font-size:14px; z-index:99999; opacity:0; transition:all 0.3s ease; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { background:#2e7d32; }
+.toast.warn { background:#e65100; }
+.toast.info { background:#1565c0; }
+
+/* 撤销按钮特殊样式 */
+.btn-undo { background:#6a1b9a; color:#fff; border-color:#6a1b9a; }
+.btn-undo:disabled { background:#bbb; border-color:#bbb; cursor:not-allowed; opacity:0.6; }
+.btn-save { background:#2e7d32; color:#fff; border-color:#2e7d32; }
+.undo-badge { display:inline-block; background:#fff; color:#6a1b9a; font-size:11px; font-weight:700; border-radius:10px; padding:0 5px; margin-left:3px; min-width:16px; text-align:center; }
+.btn-undo:disabled .undo-badge { background:#fff; color:#bbb; }
 </style>
 </head>
 <body>
@@ -198,6 +212,9 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
       <span class="subtitle">在线版 v2026-06-20 (多维筛选+付款状态)</span>
     </div>
     <div class="btn-group">
+      <button class="btn btn-undo" id="undoBtn" onclick="undo()" disabled title="撤销上一步操作 (Ctrl+Z)">↶ 返回上一步<span class="undo-badge" id="undoBadge">0</span></button>
+      <button class="btn btn-save" onclick="manualSave()" title="保存到服务器 (Ctrl+S)">💾 保存</button>
+      <button class="btn" onclick="addRow()">+ 添加行</button>
       <button class="btn" onclick="showImport()">批量导入</button>
       <button class="btn" onclick="downloadTemplate('xlsx')" style="background:#1565c0;color:#fff;border-color:#1565c0;">下载模板</button>
       <button class="btn btn-danger" onclick="deleteSelected()">删除选中</button>
@@ -316,6 +333,8 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 (function(){
@@ -683,13 +702,77 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     bar.textContent='可见费用合计：'+total+' 元（显示 '+count+' 条）';
   }
 
+  // ===== 历史记录（撤销栈）=====
+  var _history = [];
+  var _maxHistory = 50;
+  var _lastSnapshot = null;
+  var _toastTimer = null;
+
+  function showToast(msg, type){
+    var el = document.getElementById('toast');
+    if(!el) return;
+    el.textContent = msg;
+    el.className = 'toast show ' + (type||'');
+    if(_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function(){ el.className = 'toast ' + (type||''); }, 2200);
+  }
+
+  function updateUndoBtn(){
+    var btn = document.getElementById('undoBtn');
+    var badge = document.getElementById('undoBadge');
+    if(btn) btn.disabled = _history.length === 0;
+    if(badge) badge.textContent = _history.length;
+  }
+
+  function snapshot(){
+    if(_lastSnapshot){
+      _history.push(_lastSnapshot);
+      if(_history.length > _maxHistory) _history.shift();
+    }
+    _lastSnapshot = JSON.parse(JSON.stringify(DATA));
+    updateUndoBtn();
+  }
+
   function save(){
     if(!DATA) DATA=[];
+    // 自动记录历史：仅在数据确实变化时
+    if(_lastSnapshot){
+      var cur = JSON.stringify(DATA);
+      if(cur !== JSON.stringify(_lastSnapshot)){
+        _history.push(_lastSnapshot);
+        if(_history.length > _maxHistory) _history.shift();
+      }
+    }
+    _lastSnapshot = JSON.parse(JSON.stringify(DATA));
+    updateUndoBtn();
     try { localStorage.setItem('nmrData', JSON.stringify(DATA)); } catch(e){}
     if(USE_API){
       apiFetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
     }
   }
+
+  window.undo = function(){
+    if(_history.length === 0){
+      showToast('没有可撤销的操作', 'warn');
+      return;
+    }
+    var prev = _history.pop();
+    DATA = prev;
+    _lastSnapshot = JSON.parse(JSON.stringify(DATA));
+    updateUndoBtn();
+    // 直接保存，不经过 save() 的历史逻辑
+    try { localStorage.setItem('nmrData', JSON.stringify(DATA)); } catch(e){}
+    if(USE_API){
+      apiFetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
+    }
+    render();
+    showToast('已撤销上一步操作（还可撤销 ' + _history.length + ' 步）', 'info');
+  };
+
+  window.manualSave = function(){
+    save();
+    showToast('数据已保存到服务器', 'success');
+  };
 
   window.addRow=function(){
     DATA.unshift({
@@ -1492,10 +1575,12 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
             }
           });
           try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
+          _lastSnapshot = JSON.parse(JSON.stringify(DATA));
+          updateUndoBtn();
           render();
-        } else { USE_API=false; DATA=loadLocal(); render(); }
-      }).catch(function(){ USE_API=false; DATA=loadLocal(); render(); });
-    } else { DATA=loadLocal(); render(); }
+        } else { USE_API=false; DATA=loadLocal(); _lastSnapshot = JSON.parse(JSON.stringify(DATA)); updateUndoBtn(); render(); }
+      }).catch(function(){ USE_API=false; DATA=loadLocal(); _lastSnapshot = JSON.parse(JSON.stringify(DATA)); updateUndoBtn(); render(); });
+    } else { DATA=loadLocal(); _lastSnapshot = JSON.parse(JSON.stringify(DATA)); updateUndoBtn(); render(); }
   }
 
   function loadLocal(){
@@ -1528,6 +1613,19 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
   else init();
+
+  // 键盘快捷键：Ctrl+Z 撤销，Ctrl+S 保存
+  document.addEventListener('keydown', function(e){
+    if(e.ctrlKey || e.metaKey){
+      if(e.key === 'z' || e.key === 'Z'){
+        e.preventDefault();
+        window.undo();
+      } else if(e.key === 's' || e.key === 'S'){
+        e.preventDefault();
+        window.manualSave();
+      }
+    }
+  });
 })();
 </script>
 </body>
