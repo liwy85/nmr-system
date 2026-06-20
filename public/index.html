@@ -447,12 +447,14 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     // 初始化主应用
     init();
   }
+  window.doLogin = doLogin;  // 注册为全局函数，供 onclick 调用
 
   function doLogout(){
     // 可选：清除记住的密码
     // try{localStorage.removeItem(LS_KEY_LOGIN);}catch(e){}
     location.reload();
   }
+  window.doLogout = doLogout;  // 注册为全局函数，供 onclick 调用
 
   // 回车键登录
   document.addEventListener('keydown',function(e){
