@@ -325,10 +325,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
   var API = location.origin;
   var USE_API = true;
   var DATA = [];
-  // 标志：init() 是否正在从服务器加载数据
-  var _initLoading = false;
-  // 标志：用户在 _initLoading 期间是否修改了 DATA
-  var _userModified = false;
 
   // 带重试的 fetch（应对 Render 免费版冷启动 404）
   function apiFetch(url, opts, retries, delay){
@@ -689,7 +685,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 
   function save(){
     if(!DATA) DATA=[];
-    _userModified = true; // 标记用户已修改数据
     try { localStorage.setItem('nmrData', JSON.stringify(DATA)); } catch(e){}
     if(USE_API){
       apiFetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
@@ -1457,29 +1452,16 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 
   function init(){
     loadPersonLists();
-    // 先用本地缓存渲染，避免页面空白等待服务器响应
-    var localData=loadLocal();
-    if(localData.length>0){
-      DATA=localData;
-      render();
-    }
     if(USE_API){
-      _initLoading=true;
       apiFetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
-        _initLoading=false;
         // 兼容两种格式：裸数组 [...] 或 {success:true, data:[...]}
         var rows=null;
         if(Array.isArray(res)){ rows=res; }
         else if(res && res.success && Array.isArray(res.data)){ rows=res.data; }
         if(rows){
-          // 关键修复：如果用户在加载期间已修改数据，不覆盖本地修改
-          if(_userModified){
-            // 用户已修改，保留本地数据并同步到服务器
-            save();
-            return;
-          }
           // 服务器无数据但本地有数据时，把本地数据上传到服务器
           if(rows.length===0){
+            var localData=loadLocal();
             if(localData.length>0){
               DATA=localData;
               try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
@@ -1512,7 +1494,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
           try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
           render();
         } else { USE_API=false; DATA=loadLocal(); render(); }
-      }).catch(function(){ _initLoading=false; USE_API=false; DATA=loadLocal(); render(); });
+      }).catch(function(){ USE_API=false; DATA=loadLocal(); render(); });
     } else { DATA=loadLocal(); render(); }
   }
 
