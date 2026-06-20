@@ -5,3 +5,6 @@ data.json
 # 忽略日志
 *.log
 npm-debug.log*
+# 忽略备份文件
+*.bak*
+*.bak-full*

@@ -187,23 +187,83 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 .testitem-dropdown .ti-item:hover { background:#f0f0ff; }
 .testitem-dropdown .ti-group-label { padding:4px 12px; font-size:13px; color:#4a148c; font-weight:600; border-bottom:1px solid #e0e0e0; margin-top:2px; }
 .testitem-dropdown .ti-all { border-bottom:1px solid #e0e0e0; margin-bottom:2px; padding:5px 12px; display:flex; align-items:center; gap:6px; }
+
+/* ===== 登录页面 ===== */
+.login-overlay {
+  position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#0d47a1 0%,#00695c 50%,#4a148c 100%);
+}
+.login-card {
+  background:#fff; border-radius:16px; padding:40px 48px 36px;
+  width:460px; max-width:92vw; box-shadow:0 20px 60px rgba(0,0,0,.35);
+  text-align:center; animation:loginFadeIn .5s ease-out;
+}
+@keyframes loginFadeIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+.login-logo { width:100%; margin-bottom:20px; display:block; }
+.login-company { font-size:22px; font-weight:700; color:#1a237e; margin-bottom:2px; letter-spacing:2px; }
+.login-company-en { font-size:11px; color:#888; letter-spacing:1px; text-transform:uppercase; margin-bottom:24px; }
+.login-field { display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:10px; padding:0 14px; height:52px; margin-bottom:14px; transition:border-color .25s; background:#fafafa; }
+.login-field:focus-within { border-color:#7c4dff; box-shadow:0 0 0 3px rgba(124,77,255,.15); }
+.login-field svg { width:22px; height:22px; fill:#999; flex-shrink:0; }
+.login-field input { flex:1; border:none; outline:none; background:transparent; padding:0 10px; font-size:17px; color:#222; min-width:0; }
+.login-options { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; font-size:14px; color:#555; }
+.login-options label { cursor:pointer; display:flex; align-items:center; gap:5px; user-select:none; }
+.login-options label input[type=checkbox] { accent-color:#7c4dff; width:17px;height:17px; }
+.login-btn {
+  width:100%; height:54px; border:none; border-radius:10px; font-size:18px; font-weight:600;
+  background:linear-gradient(135deg,#7c4dff,#4a148c); color:#fff; cursor:pointer;
+  transition:.25s; letter-spacing:3px;
+}
+.login-btn:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(74,20,140,.35); }
+.login-btn:active { transform:translateY(0); }
+.login-error { color:#d32f2f; font-size:13px; min-height:18px; margin-top:10px; opacity:0; transition:opacity .25s; }
+.login-error.show { opacity:1; }
+/* 主应用初始隐藏 */
+#mainApp { transition: opacity .35s ease; }
+#mainApp.hidden { display:none !important; }
+
+/* 价格参考条 */
+.price-ref { margin-top:12px; padding:10px 14px; background:#fff; border:1px solid #ddd; border-radius:8px; font-size:12px; color:#666; line-height:1.7; }
 </style>
 </head>
 <body>
 
-<div class="container">
+<!-- ===== 登录页面 ===== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <img src="logo.jpg" alt="Logo" class="login-logo">
+    <div class="login-field">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <input type="text" id="loginUser" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      <input type="password" id="loginPass" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="login-options">
+      <label><input type="checkbox" id="rememberLogin"> 记住账号密码</label>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
+    <div class="login-error" id="loginError">账号或密码错误，请重新输入</div>
+  </div>
+</div>
+
+<!-- ===== 主应用 ===== -->
+<div class="container hidden" id="mainApp">
   <div class="top-bar">
     <div style="display:flex;align-items:baseline;flex-wrap:wrap;">
       <h1>NMR 核磁测试登记表</h1>
-      <span class="subtitle">在线版 v2026-06-20 (多维筛选+付款状态)</span>
+      <span class="subtitle">广西键合生物科技有限公司</span>
     </div>
     <div class="btn-group">
       <button class="btn" onclick="showImport()">批量导入</button>
-      <button class="btn" onclick="downloadTemplate('xlsx')" style="background:#1565c0;color:#fff;border-color:#1565c0;">下载模板</button>
+      <button class="btn" onclick="window.location.href='NMR批量导入模板.csv'" style="font-size:12px;padding:6px 12px;background:#00897b;color:#fff;border-color:#00897b;">📥 CSV模板</button>
+      <button class="btn" onclick="window.location.href='NMR批量导入模板.xlsx'" style="font-size:12px;padding:6px 12px;background:#1a73e8;color:#fff;border-color:#1a73e8;">📥 Excel模板</button>
       <button class="btn btn-danger" onclick="deleteSelected()">删除选中</button>
       <button class="btn btn-success" onclick="exportCSV()">导出全部</button>
       <button class="btn btn-success" onclick="exportSelected()" style="background:#ff9800;border-color:#ff9800;">导出选中</button>
       <button class="btn btn-success" onclick="exportFiltered()" style="background:#00897b;border-color:#00897b;">导出筛选</button>
+      <button class="btn" onclick="doLogout()" style="background:#78909c;color:#fff;border-color:#78909c;">退出登录</button>
     </div>
   </div>
 
@@ -293,11 +353,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 <div class="modal-overlay" id="importModal">
   <div class="modal">
     <h3>批量导入</h3>
-    <p class="hint">粘贴 Excel 数据（Tab 分隔）或上传 CSV 文件<br>列顺序：日期 样品编号 送样人 单位 样品状态 保存条件 溶剂 测试项目 优先级 状态 付款状态 备注</p>
-    <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn" onclick="downloadTemplate('xlsx')" style="background:#1565c0;color:#fff;border-color:#1565c0;">下载Excel模板</button>
-      <button class="btn" onclick="downloadTemplate('csv')">下载CSV模板</button>
-    </div>
+    <p class="hint">粘贴 Excel 数据（Tab 分隔）或上传 CSV 文件<br>列顺序：日期 样品编号 送样人 单位 样品状态 保存条件 溶剂 测试项目 优先级 状态 [付款状态]</p>
     <textarea id="importText" placeholder="粘贴数据到此..."></textarea>
     <p class="hint">或选择文件：<input type="file" id="importFile" accept=".csv,.txt"></p>
     <div class="btn-row">
@@ -321,35 +377,89 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 (function(){
   'use strict';
 
-  // 同源 API：后端与前端部署在同一服务，API 地址即当前站点源
-  var API = location.origin;
-  var USE_API = true;
-  var DATA = [];
+  // ===== 登录系统 =====
+  var LOGIN_USER = 'liwy85';
+  var LOGIN_PASS = 'Liwy@854321';
+  var LS_KEY_LOGIN = 'nmrLogin';
+  var SS_KEY_SESSION = 'nmrSession';  // 会话级登录态：刷新保留，关闭标签页清除
 
-  // 带重试的 fetch（应对 Render 免费版冷启动 404）
-  function apiFetch(url, opts, retries, delay){
-    retries = retries || 3;
-    delay = delay || 2000;
-    return new Promise(function(resolve, reject){
-      function attempt(n){
-        fetch(url, opts).then(function(r){
-          if(r.status === 404 && n < retries){
-            // 冷启动 404，等待后重试
-            setTimeout(function(){ attempt(n+1); }, delay);
-          } else {
-            resolve(r);
-          }
-        }).catch(function(e){
-          if(n < retries){
-            setTimeout(function(){ attempt(n+1); }, delay);
-          } else {
-            reject(e);
-          }
-        });
-      }
-      attempt(0);
-    });
+  function checkLogin(){
+    // 只检查 sessionStorage：当前会话已登录则自动进入系统
+    // localStorage 仅用于"记住账号密码"——填充登录表单，不会自动登录
+    // 这样退出登录后：登录页可见 + 账号密码已填好，用户点登录即可重新进入
+    try {
+      if(sessionStorage.getItem(SS_KEY_SESSION) === '1') return true;
+    } catch(e){}
+    return false;
   }
+
+  function loadSavedLoginInfo(){
+    try {
+      var saved = localStorage.getItem(LS_KEY_LOGIN);
+      if(saved){
+        var info = JSON.parse(saved);
+        if(info.u){ document.getElementById('loginUser').value = info.u; }
+        if(info.p){ document.getElementById('loginPass').value = info.p; }
+        document.getElementById('rememberLogin').checked = true;
+      }
+    } catch(e){}
+  }
+
+  function doLogin(){
+    var user = document.getElementById('loginUser').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    var errEl = document.getElementById('loginError');
+
+    errEl.classList.remove('show');
+    setTimeout(function(){ if(!errEl.classList.contains('show')) { errEl.textContent=''; } }, 300);
+
+    if(user !== LOGIN_USER || pass !== LOGIN_PASS){
+      errEl.textContent = '账号或密码错误，请重新输入';
+      errEl.classList.add('show');
+      var passField = document.getElementById('loginPass').parentElement;
+      passField.style.borderColor='#d32f2f';
+      setTimeout(function(){ passField.style.borderColor=''; }, 1200);
+      return;
+    }
+
+    if(document.getElementById('rememberLogin').checked){
+      try { localStorage.setItem(LS_KEY_LOGIN, JSON.stringify({u:user,p:pass})); } catch(e){}
+    } else {
+      try { localStorage.removeItem(LS_KEY_LOGIN); } catch(e){}
+    }
+    // 无论是否记住密码，都设置 sessionStorage，使刷新不丢失登录态
+    try { sessionStorage.setItem(SS_KEY_SESSION, '1'); } catch(e){}
+
+    document.getElementById('loginOverlay').style.display = 'none';
+    var mainApp = document.getElementById('mainApp');
+    mainApp.classList.remove('hidden');
+
+    init();
+  }
+  window.doLogin = doLogin;
+
+  function doLogout(){
+    // 只清会话级登录态：回到登录页
+    // 保留 localStorage 里的"记住账号密码"信息，让登录页自动填充账号密码
+    try { sessionStorage.removeItem(SS_KEY_SESSION); } catch(e){}
+    location.reload();
+  }
+  window.doLogout = doLogout;
+
+  document.addEventListener('keydown',function(e){
+    if(e.key === 'Enter'){
+      var overlay = document.getElementById('loginOverlay');
+      if(overlay && overlay.style.display !== 'none' && !overlay.classList.contains('hidden')){
+        doLogin();
+      }
+    }
+  });
+
+  // ===== 主应用 =====
+  // 本地 file:// 协议打开时关闭 API 调用，避免无效请求
+  var API = location.protocol === 'http:' || location.protocol === 'https:' ? location.origin : '';
+  var USE_API = !!API;  // file: 协议下自动为 false
+  var DATA = [];
 
   var SOLVENTS = [
     {n:'无溶剂',                p:0},
@@ -445,7 +555,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     return total;
   }
 
-  // 修改：彻底移除了额外的超时费用计算逻辑
   function calcRowFee(row){
     var solventFee = getSolventPrice(row.solvent);
     var testFee   = getTestFee(row.testItem);
@@ -457,7 +566,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     return solventFee + testFee + adjust;
   }
 
-  // 修复：ID 生成追加随机数，防止导入极速碰撞 Bug
   function genId(){
     var d=new Date(),Y=String(d.getFullYear()).slice(2),
         M=String(d.getMonth()+1).padStart(2,'0'),
@@ -472,9 +580,26 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 
   function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
-  // 修复：提取 CSV 安全转义函数，处理导出的英文逗号干扰
   function safeCSV(str) {
     return (str || '').toString().replace(/,/g, '，').replace(/\r?\n/g, ' ').trim();
+  }
+
+  // 带重试的 fetch（应对 Render 免费版冷启动 404）
+  function apiFetch(url, opts, retries, delay){
+    retries = retries || 3;
+    delay = delay || 2000;
+    return new Promise(function(resolve, reject){
+      function attempt(n){
+        fetch(url, opts).then(function(r){
+          if(r.status === 404 && n < retries){
+            setTimeout(function(){ attempt(n+1); }, delay);
+          } else {
+            resolve(r);
+          }
+        }).catch(function(e){ reject(e); });
+      }
+      attempt(0);
+    });
   }
 
   function render(){
@@ -533,7 +658,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     syncHeaderCk();
     populateFilters();
     if(STATS_OPEN) renderStats();
-    doSearch(); // 渲染后保持筛选状态
+    doSearch();
   }
 
   function buildFeeHtml(row){
@@ -548,7 +673,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
       : '<span class="solvent-fee-free">免费</span>';
   }
 
-  // Fix 6: 文本框高度自适应
   function autoResizeTextarea(el){
     if(!el) return;
     el.style.height='auto';
@@ -612,7 +736,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
             '<button class="action-btn ins" onclick="insertRowBelow(\''+row.id+'\')" title="在下方插入新行">∨</button>'+
             '<button class="action-btn del" onclick="delRow(\''+row.id+'\')" title="删除此行">✕</button>'+
           '</div></td>';
-    // Fix 6: 渲染后自适应高度
     setTimeout(function(){ autoResizeAllTestItems(); }, 50);
     return tr;
   }
@@ -671,7 +794,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     var bar=document.getElementById('totalFeeBar');
     if(!bar) return;
     var total=0;
-    // 只统计未被搜索过滤掉的数据
     var trs = document.querySelectorAll('#tbody tr[data-id]');
     var count = 0;
     for(var i=0;i<trs.length;i++){
@@ -793,7 +915,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     refreshFee(tr,row);
   };
 
-  // Fix 4: 费用微调后重渲染调整容器，确保 UI 与数据同步
   window.feeAdjustAmtChange=function(inp){
     var tr=inp.closest('tr'); if(!tr) return;
     var id=tr.getAttribute('data-id'); var row=getRow(id); if(!row) return;
@@ -803,7 +924,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     if(v<=0){ row.feeAdjust = ''; }
     else { row.feeAdjust = isPlus ? String(v) : '-'+String(v); }
     save();
-    // Fix 4: 重渲染调整容器
     var adjContainer=tr.querySelector('.fee-adjust-container[data-rowid="'+row.id+'"]');
     if(adjContainer) adjContainer.innerHTML=buildFeeAdjustHtml(row);
     refreshFee(tr,row);
@@ -849,7 +969,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     });
   };
 
-  // 修复：批量删除时，同步调取后端的 Delete API 确保两端同步
   window.deleteSelected=function(){
     var cks=document.querySelectorAll('#tbody .ck:checked');
     if(cks.length===0){alert('请先选择');return;}
@@ -870,8 +989,37 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     return null;
   }
 
+  // 滚动时关闭所有自定义下拉面板（解决 fixed 定位导致的漂移问题）
   var _dropdown=null;
+  var _testitemDropdown=null;
+  function closeAllDropdowns(){
+    if(_dropdown){ _dropdown.remove(); _dropdown=null; }
+    if(_testitemDropdown){ _testitemDropdown.remove(); _testitemDropdown=null; }
+    if(_personDropdown){ _personDropdown.remove(); _personDropdown=null; window.__pdInput=null; }
+    // 关闭后立刻移除 document 上的临时点击监听器
+    if(_activeDropdownHandler){
+      document.removeEventListener('click', _activeDropdownHandler);
+      _activeDropdownHandler = null;
+    }
+  }
+  var _dropdownScrollBound = false;
+  function bindScrollToCloseDropdowns(){
+    if(_dropdownScrollBound) return;
+    _dropdownScrollBound = true;
+    var containers = [
+      document.querySelector('.table-wrap'),
+      window
+    ];
+    containers.forEach(function(c){
+      if(!c) return;
+      c.addEventListener('scroll', closeAllDropdowns, true);  // capture: 捕获阶段触发，先于元素处理
+    });
+  }
+  // 当前生效的 document click 处理器引用，用于清理（解决事件泄漏）
+  var _activeDropdownHandler = null;
   window.showSolvent=function(el){
+    // 先关闭所有已打开的下拉（同时清理旧的 click handler）
+    closeAllDropdowns();
     if(_dropdown){ _dropdown.remove(); _dropdown=null; return; }
     var panel=document.createElement('div');
     panel.className='solvent-dropdown';
@@ -898,15 +1046,21 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     var rect=el.getBoundingClientRect(); var ph=SOLVENTS.length*40+10; var top=rect.bottom+2;
     if(rect.bottom+ph>window.innerHeight && rect.top>ph) top=rect.top-ph-2;
     panel.style.top=top+'px'; panel.style.left=rect.left+'px'; panel.style.display='block';
-    setTimeout(function(){
-      document.addEventListener('click',function h(e){
-        if(!panel.contains(e.target)&&e.target!==el){ panel.remove(); _dropdown=null; document.removeEventListener('click',h); }
-      });
-    },10);
+    // 用统一的 handler 引用，避免重复绑定 / 内存泄漏
+    _activeDropdownHandler = function(e){
+      if(!panel.contains(e.target) && e.target!==el && !el.contains(e.target)){
+        panel.remove(); _dropdown=null;
+        document.removeEventListener('click', _activeDropdownHandler);
+        _activeDropdownHandler = null;
+      }
+    };
+    // 延迟一帧绑定，避免当前点击事件立即触发关闭
+    setTimeout(function(){ document.addEventListener('click', _activeDropdownHandler); }, 0);
   };
 
-  var _testitemDropdown=null;
   window.showTestItem=function(el){
+    // 先关闭所有已打开的下拉（同时清理旧的 click handler）
+    closeAllDropdowns();
     if(_testitemDropdown){ _testitemDropdown.remove(); _testitemDropdown=null; return; }
     var tr=el.closest('tr'); var id=tr.getAttribute('data-id'); var row=getRow(id);
     var curVal=row&&row.testItem||'';
@@ -969,15 +1123,24 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     var rect=el.getBoundingClientRect(); var ph=panel.offsetHeight||300; var top=rect.bottom+2;
     if(rect.bottom+ph>window.innerHeight && rect.top>ph) top=rect.top-ph-2;
     panel.style.top=top+'px'; panel.style.left=rect.left+'px'; panel.style.display='block';
-    setTimeout(function(){
-      document.addEventListener('click',function h(e){
-        if(!panel.contains(e.target)&&e.target!==el&&!el.contains(e.target)){ panel.remove(); _testitemDropdown=null; document.removeEventListener('click',h); }
-      });
-    },10);
+    // 用统一的 handler 引用，避免重复绑定 / 内存泄漏
+    _activeDropdownHandler = function(e){
+      if(!panel.contains(e.target) && e.target!==el && !el.contains(e.target)){
+        panel.remove(); _testitemDropdown=null;
+        document.removeEventListener('click', _activeDropdownHandler);
+        _activeDropdownHandler = null;
+      }
+    };
+    setTimeout(function(){ document.addEventListener('click', _activeDropdownHandler); }, 0);
   };
 
   var _personDropdown = null;
   window.showPersonDropdown = function(btn, type){
+    // 清理上一轮残留的 click handler，避免叠加
+    if(_activeDropdownHandler){
+      document.removeEventListener('click', _activeDropdownHandler);
+      _activeDropdownHandler = null;
+    }
     var wrap = btn.closest('.person-input-wrap'); if(!wrap) return;
     var input = wrap.querySelector('.cell-input');
     if(_personDropdown){ _personDropdown.remove(); _personDropdown=null; if(window.__pdInput===input) return; }
@@ -1012,13 +1175,14 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     if(rect.bottom + ph > window.innerHeight && rect.top > ph) top = rect.top - ph - 2;
     panel.style.top = top + 'px'; panel.style.left = rect.left + 'px'; panel.style.minWidth = rect.width + 'px'; panel.style.display = 'block';
 
-    setTimeout(function(){
-      document.addEventListener('click', function h(e){
-        if(!panel.contains(e.target) && e.target !== btn && !wrap.contains(e.target)){
-          panel.remove(); _personDropdown=null; window.__pdInput=null; document.removeEventListener('click', h);
-        }
-      });
-    }, 10);
+    _activeDropdownHandler = function(e){
+      if(!panel.contains(e.target) && e.target !== btn && !wrap.contains(e.target)){
+        panel.remove(); _personDropdown=null; window.__pdInput=null;
+        document.removeEventListener('click', _activeDropdownHandler);
+        _activeDropdownHandler = null;
+      }
+    };
+    setTimeout(function(){ document.addEventListener('click', _activeDropdownHandler); }, 0);
   };
 
   window.personInputBlur = function(el, field){
@@ -1029,8 +1193,13 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     save();
   };
 
-  // 多维度筛选：关键词 + 单位/部门 + 月份 + 付款状态
-  window.doSearch=function(){
+  // 搜索防抖：300ms 内连续输入只触发一次，避免大数据量下卡顿
+  var _searchTimer = null;
+  function debounceSearch(){
+    if(_searchTimer) clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(function(){ _searchTimer = null; doSearchNow(); }, 300);
+  }
+  function doSearchNow(){
     var kw=document.getElementById('searchInput').value.trim().toLowerCase();
     var fDept=(document.getElementById('filterDept')||{}).value||'';
     var fMon=(document.getElementById('filterMonth')||{}).value||'';
@@ -1065,9 +1234,10 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
       fr.textContent=parts.join('  |  ');
     }
     updateTotalFee();
-  };
+  }
+  // 对外接口：保留原 doSearch 调用语义，走防抖
+  window.doSearch = debounceSearch;
 
-  // 动态填充筛选下拉选项（保留当前选中值）
   function populateFilters(){
     var deptSet={}, monthSet={};
     DATA.forEach(function(r){
@@ -1096,7 +1266,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     doSearch();
   };
 
-  // 修复：针对全字段应用的 CSV 逗号过滤函数（涵盖了漏掉的送样人与单位）
   function buildCSVRows(rows){
     return rows.map(function(r){
       var adj=parseFloat(r.feeAdjust) || 0;
@@ -1151,7 +1320,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     URL.revokeObjectURL(url);
   };
 
-  // 导出当前筛选可见行（含汇总统计，适合月底与各单位/部门结算）
   window.exportFiltered=function(){
     var rows=[];
     var trs=document.querySelectorAll('#tbody tr[data-id]');
@@ -1191,7 +1359,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
   function syncHeaderCk(){
     var all=document.querySelectorAll('#tbody .ck');
     var checked=document.querySelectorAll('#tbody .ck:checked');
-    // Fix 3: 只统计可见行
     var visibleAll=0, visibleChecked=0;
     for(var i=0;i<all.length;i++){
       if(all[i].closest('tr').style.display!=='none') visibleAll++;
@@ -1219,23 +1386,6 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     document.getElementById('importText').value='';
     document.getElementById('importFile').value='';
   };
-  window.downloadTemplate=function(type){
-    var base = window.location.origin + window.location.pathname.replace(/[^\/]*$/,'');
-    var url, fname;
-    if(type==='xlsx'){
-      url = base + 'NMR批量导入模板.xlsx';
-      fname = 'NMR批量导入模板.xlsx';
-    } else {
-      url = base + 'NMR批量导入模板.csv';
-      fname = 'NMR批量导入模板.csv';
-    }
-    var a=document.createElement('a');
-    a.href=url;
-    a.download=fname;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
   window.doImport=function(){
     var txt=document.getElementById('importText').value.trim();
     var fi=document.getElementById('importFile');
@@ -1261,41 +1411,55 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
         else { return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); }
       }
       if(/^\d+$/.test(d)){
-        var excelEpoch=new Date(1899,11,30);
-        var dDate=new Date(excelEpoch.getTime()+parseInt(d)*86400000);
-        return dDate.toISOString().slice(0,10);
+        // 使用 UTC 计算，避免本地时区导致日期 ±1 天
+        // Excel 序列号 1 = 1899-12-31 (Excel 1900 epoch, 含 1900 闰年 bug 故起点取 1899-12-30)
+        var days = parseInt(d, 10);
+        var dDate = new Date(Date.UTC(1899, 11, 30 + days));
+        return dDate.getUTCFullYear() + '-' +
+               String(dDate.getUTCMonth()+1).padStart(2,'0') + '-' +
+               String(dDate.getUTCDate()).padStart(2,'0');
       }
       return new Date().toISOString().slice(0,10);
     }
 
+    // RFC 4180 兼容的 CSV 单行解析器：
+    // 1. 自动检测分隔符（tab 优先，否则 comma）
+    // 2. 支持双引号包裹的字段（字段内可含分隔符/换行/引号）
+    // 3. 双引号内的 "" 转义为单个 "
+    function parseCSVLine(line){
+      var sep = line.indexOf('\t') !== -1 ? '\t' : ',';
+      var fields = [];
+      var buf = '';
+      var inQuotes = false;
+      for(var i = 0; i < line.length; i++){
+        var ch = line[i];
+        if(inQuotes){
+          if(ch === '"'){
+            if(line[i+1] === '"'){ buf += '"'; i++; }
+            else { inQuotes = false; }
+          } else { buf += ch; }
+        } else {
+          if(ch === '"'){ inQuotes = true; }
+          else if(ch === sep){ fields.push(buf); buf = ''; }
+          else { buf += ch; }
+        }
+      }
+      fields.push(buf); // 最后一个字段
+      return fields.map(function(s){ return s.trim(); });
+    }
+
     var lines=text.split('\n').filter(function(l){return l.trim();});
     if(lines.length>0){
-      var first=lines[0].split(/[\t,]/)[0].trim();
+      var first=parseCSVLine(lines[0])[0] || '';
       if(first.indexOf('日期')!==-1||first.indexOf('date')!==-1||first.indexOf('Date')!==-1) lines.shift();
     }
     var cnt=0;
     lines.forEach(function(line){
-      var sep=line.indexOf('\t')!=-1?'\t':',';
-      var p=line.split(sep).map(function(s){return s.trim();});
+      var p=parseCSVLine(line);
       if(p.length<3) return;
       var dateStr=normalizeDate(p[0]);
       var remark='', feeAdjust='';
-      // 新列顺序(12列)：p[10]=付款状态, p[11]=备注
-      // 向后兼容：旧11列格式 p[10]可能是备注
-      var remarkCol='';
-      var paymentStatus='未付款';
-      if(p.length>=12){
-        paymentStatus = p[10] || '未付款';
-        remarkCol = p[11] || '';
-      } else if(p.length>=11){
-        // 11列：判断p[10]是付款状态还是备注
-        var v10 = (p[10]||'').trim();
-        if(v10==='未付款' || v10==='已付款'){
-          paymentStatus = v10;
-        } else {
-          remarkCol = v10;
-        }
-      }
+      var remarkCol=p.length>=11?p[10]:(p.length>=10?p[9]:'');
       if(remarkCol){
         var m=/\[([\+\-]?\d+元[折扣]*)\]$/.exec(remarkCol);
         if(m){
@@ -1333,51 +1497,25 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
         var cleaned = raw.replace(/\s+/g, '').toUpperCase();
         
         var solventMap = {
-          // 无溶剂
           '无溶剂': '无溶剂',
-          
-          // 氘代氯仿
           '氘代氯仿': '氘代氯仿(CDCl₃)', 'CDCL₃': '氘代氯仿(CDCl₃)', 'CDCL3': '氘代氯仿(CDCl₃)', 'CHLOROFORM': '氘代氯仿(CDCl₃)',
-          
-          // 氘代二甲亚砜
           '氘代二甲亚砜': '氘代二甲亚砜(DMSO-d₆)', 'DMSO': '氘代二甲亚砜(DMSO-d₆)', 'DMSO-D₆': '氘代二甲亚砜(DMSO-d₆)', 'DMSOD6': '氘代二甲亚砜(DMSO-d₆)',
-          
-          // 重水
           '重水': '重水(D₂O)', 'D₂O': '重水(D₂O)', 'D2O': '重水(D₂O)', 'DEUTERIUMOXIDE': '重水(D₂O)',
-          
-          // 氘代丙酮
           '氘代丙酮': '氘代丙酮(C₃D₆O)', 'C₃D₆O': '氘代丙酮(C₃D₆O)', 'C3D6O': '氘代丙酮(C₃D₆O)', 'ACETONE': '氘代丙酮(C₃D₆O)',
-          
-          // 氘代乙腈
           '氘代乙腈': '氘代乙腈(CD₃CN-d₃)', 'CD₃CN': '氘代乙腈(CD₃CN-d₃)', 'CD3CN': '氘代乙腈(CD₃CN-d₃)', 'ACETONITRILE': '氘代乙腈(CD₃CN-d₃)',
-          
-          // 氘代乙酸
           '氘代乙酸': '氘代乙酸(CD₃COOH-d₄)', 'CD₃COOH': '氘代乙酸(CD₃COOH-d₄)', 'CD3COOH': '氘代乙酸(CD₃COOH-d₄)', 'ACETICACID': '氘代乙酸(CD₃COOH-d₄)',
-          
-          // 氘代盐酸
           '氘代盐酸': '氘代盐酸(DCl)', 'DCL': '氘代盐酸(DCl)', 'DEUTERIUMCHLORIDE': '氘代盐酸(DCl)',
-          
-          // 氘代吡啶
           '氘代吡啶': '氘代吡啶(Py-d₅)', 'PY-D₅': '氘代吡啶(Py-d₅)', 'PYD5': '氘代吡啶(Py-d₅)', 'PYRIDINE': '氘代吡啶(Py-d₅)',
-          
-          // 氘代三氟乙酸
           '氘代三氟乙酸': '氘代三氟乙酸(CF₃COOD)', 'CF₃COOD': '氘代三氟乙酸(CF₃COOD)', 'CF3COOD': '氘代三氟乙酸(CF₃COOD)', 'TFA': '氘代三氟乙酸(CF₃COOD)'
         };
         
-        // 尝试精确匹配
         if(solventMap[raw]) return solventMap[raw];
-        
-        // 尝试清洗后匹配
         if(solventMap[cleaned]) return solventMap[cleaned];
-        
-        // 尝试部分匹配（包含关键词）
         for(var key in solventMap){
           if(raw.indexOf(key) !== -1 || cleaned.indexOf(key.toUpperCase()) !== -1){
             return solventMap[key];
           }
         }
-        
-        // 都没匹配到，返回原值
         return raw;
       }
 
@@ -1386,7 +1524,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
         date:dateStr, sampleId:p[1]||'', submitter:p[2]||'', dept:p[3]||'',
         sampleStatus:p[4]||'固体', storage:p[5]||'室温', solvent:normalizeImportSolvent(p[6]),
         testItem:normalizeImportTestItem(p[7]), priority:p.length>=9?p[8]:'正常', status:p.length>=10?p[9]:'已测试',
-        paymentStatus: paymentStatus,
+        paymentStatus: p.length>=11 ? (p[10]||'未付款') : '未付款',
         remark:remark, feeAdjust:feeAdjust, createdAt:new Date().toISOString()
       };
       DATA.push(row); cnt++;
@@ -1450,47 +1588,41 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     var el = document.getElementById(id); if(el) el.classList.toggle('open');
   };
 
+  function normalizeRows(arr){
+    arr.forEach(function(r){
+      if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
+      if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
+      if(r.feeAdjust===undefined) r.feeAdjust=''; if(r.priority===undefined) r.priority='正常';
+      if(r.status===undefined) r.status='待测试';
+      delete r.extraMinutes; 
+      if(SOLVENT_MAP[r.solvent]) r.solvent = SOLVENT_MAP[r.solvent];
+      var oldMap={'1H NMR':'1H谱(16ns)','13C NMR':'13C谱(512ns)','19F NMR':'19F谱(64ns)','31P NMR':'31P谱(64ns)','11B NMR':'11B谱(64ns)','DEPT-135':'DEPT135(512ns)','COSY':'COSY (64ns)','HSQC':'HSQC (512ns)','NOESY':'NOESY (H-H)','HMBC':'HMBC (H-C)','2D NMR':'COSY (64ns)'};
+      var nsMap={'1H':'1H谱(16ns)','1H谱':'1H谱(16ns)','13C':'13C谱(512ns)','13C谱':'13C谱(512ns)','19F':'19F谱(64ns)','19F谱':'19F谱(64ns)','31P':'31P谱(64ns)','31P谱':'31P谱(64ns)','11B':'11B谱(64ns)','11B谱':'11B谱(64ns)','DEPT45':'DEPT45(512ns)','DEPT90':'DEPT90(512ns)','DEPT135':'DEPT135(512ns)','COSY (H-H)':'COSY (64ns)','HSQC (H-C)':'HSQC (512ns)'};
+      var allMap={}; for(var k in oldMap) allMap[k]=oldMap[k]; for(var k in nsMap) allMap[k]=nsMap[k];
+      if(r.testItem){
+        var parts=r.testItem.split(','); var normalized=[];
+        for(var p=0;p<parts.length;p++){
+          var item=parts[p].trim(); if(!item) continue;
+          if(allMap[item]) item=allMap[item];
+          if(normalized.indexOf(item)===-1) normalized.push(item);
+        }
+        r.testItem=normalized.join(',');
+      }
+    });
+    return arr;
+  }
+
   function init(){
+    // 绑定滚动监听：滚动时关闭所有自定义下拉面板，避免位置漂移
+    bindScrollToCloseDropdowns();
     loadPersonLists();
     if(USE_API){
       apiFetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
-        // 兼容两种格式：裸数组 [...] 或 {success:true, data:[...]}
         var rows=null;
         if(Array.isArray(res)){ rows=res; }
         else if(res && res.success && Array.isArray(res.data)){ rows=res.data; }
         if(rows){
-          // 服务器无数据但本地有数据时，把本地数据上传到服务器
-          if(rows.length===0){
-            var localData=loadLocal();
-            if(localData.length>0){
-              DATA=localData;
-              try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
-              render();
-              save(); // 上传本地数据到服务器
-              return;
-            }
-          }
-          DATA=rows;
-          DATA.forEach(function(r){
-            if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
-            if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
-            if(r.feeAdjust===undefined) r.feeAdjust=''; if(r.priority===undefined) r.priority='正常';
-            if(r.status===undefined) r.status='待测试';
-            delete r.extraMinutes; 
-            if(SOLVENT_MAP[r.solvent]) r.solvent = SOLVENT_MAP[r.solvent];
-            var oldMap={'1H NMR':'1H谱(16ns)','13C NMR':'13C谱(512ns)','19F NMR':'19F谱(64ns)','31P NMR':'31P谱(64ns)','11B NMR':'11B谱(64ns)','DEPT-135':'DEPT135(512ns)','COSY':'COSY (64ns)','HSQC':'HSQC (512ns)','NOESY':'NOESY (H-H)','HMBC':'HMBC (H-C)','2D NMR':'COSY (64ns)'};
-            var nsMap={'1H':'1H谱(16ns)','1H谱':'1H谱(16ns)','13C':'13C谱(512ns)','13C谱':'13C谱(512ns)','19F':'19F谱(64ns)','19F谱':'19F谱(64ns)','31P':'31P谱(64ns)','31P谱':'31P谱(64ns)','11B':'11B谱(64ns)','11B谱':'11B谱(64ns)','DEPT45':'DEPT45(512ns)','DEPT90':'DEPT90(512ns)','DEPT135':'DEPT135(512ns)','COSY (H-H)':'COSY (64ns)','HSQC (H-C)':'HSQC (512ns)'};
-            var allMap={}; for(var k in oldMap) allMap[k]=oldMap[k]; for(var k in nsMap) allMap[k]=nsMap[k];
-            if(r.testItem){
-              var parts=r.testItem.split(','); var normalized=[];
-              for(var p=0;p<parts.length;p++){
-                var item=parts[p].trim(); if(!item) continue;
-                if(allMap[item]) item=allMap[item];
-                if(normalized.indexOf(item)===-1) normalized.push(item);
-              }
-              r.testItem=normalized.join(',');
-            }
-          });
+          DATA=normalizeRows(rows);
           try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
           render();
         } else { USE_API=false; DATA=loadLocal(); render(); }
@@ -1502,32 +1634,24 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     try{
       var raw=localStorage.getItem('nmrData'); if(!raw) return [];
       var d=JSON.parse(raw); if(!Array.isArray(d)) return [];
-      d.forEach(function(r){
-        if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
-        if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
-        if(r.feeAdjust===undefined) r.feeAdjust=''; if(r.priority===undefined) r.priority='正常';
-        if(r.status===undefined) r.status='待测试';
-        delete r.extraMinutes; // 确保清理老数据的幽灵字段
-        if(SOLVENT_MAP[r.solvent]) r.solvent = SOLVENT_MAP[r.solvent];
-        var oldMap2={'1H NMR':'1H谱(16ns)','13C NMR':'13C谱(512ns)','19F NMR':'19F谱(64ns)','31P NMR':'31P谱(64ns)','11B NMR':'11B谱(64ns)','DEPT-135':'DEPT135(512ns)','COSY':'COSY (64ns)','HSQC':'HSQC (512ns)','NOESY':'NOESY (H-H)','HMBC':'HMBC (H-C)','2D NMR':'COSY (64ns)'};
-        var nsMap2={'1H':'1H谱(16ns)','1H谱':'1H谱(16ns)','13C':'13C谱(512ns)','13C谱':'13C谱(512ns)','19F':'19F谱(64ns)','19F谱':'19F谱(64ns)','31P':'31P谱(64ns)','31P谱':'31P谱(64ns)','11B':'11B谱(64ns)','11B谱':'11B谱(64ns)','DEPT45':'DEPT45(512ns)','DEPT90':'DEPT90(512ns)','DEPT135':'DEPT135(512ns)','COSY (H-H)':'COSY (64ns)','HSQC (H-C)':'HSQC (512ns)'};
-        var allMap2={}; for(var k2 in oldMap2) allMap2[k2]=oldMap2[k2]; for(var k2 in nsMap2) allMap2[k2]=nsMap2[k2];
-        if(r.testItem){
-          var parts2=r.testItem.split(','); var normalized2=[];
-          for(var p2=0;p2<parts2.length;p2++){
-            var item2=parts2[p2].trim(); if(!item2) continue;
-            if(allMap2[item2]) item2=allMap2[item2];
-            if(normalized2.indexOf(item2)===-1) normalized2.push(item2);
-          }
-          r.testItem=normalized2.join(',');
-        }
-      });
-      return d;
+      return normalizeRows(d);
     }catch(e){return [];}
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
-  else init();
+  // 启动时检查登录状态
+  (function bootstrap(){
+    if(checkLogin()){
+      document.getElementById('loginOverlay').style.display = 'none';
+      loadSavedLoginInfo();
+      var mainApp = document.getElementById('mainApp');
+      mainApp.classList.remove('hidden');
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+      else init();
+    } else {
+      loadSavedLoginInfo();
+      setTimeout(function(){ document.getElementById('loginUser').focus(); }, 100);
+    }
+  })();
 })();
 </script>
 </body>
