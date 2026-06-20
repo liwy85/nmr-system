@@ -1,5 +1,16 @@
 # NMR 核磁测试登记表 — 在线系统
 
+## 在线访问
+
+**公网地址：https://nmr-system.onrender.com**
+
+> Render 免费版服务在空闲 15 分钟后会自动休眠，首次访问需等待约 30-60 秒冷启动。页面已内置自动重试机制，无需手动刷新。
+
+### GitHub 仓库
+https://github.com/liwy85/nmr-system
+
+---
+
 ## 系统简介
 
 基于 Node.js + Express 的核磁测试登记表在线系统，支持多人共享同一份数据。
