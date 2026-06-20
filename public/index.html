@@ -199,6 +199,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     </div>
     <div class="btn-group">
       <button class="btn" onclick="showImport()">批量导入</button>
+      <button class="btn" onclick="downloadTemplate('xlsx')" style="background:#1565c0;color:#fff;border-color:#1565c0;">下载模板</button>
       <button class="btn btn-danger" onclick="deleteSelected()">删除选中</button>
       <button class="btn btn-success" onclick="exportCSV()">导出全部</button>
       <button class="btn btn-success" onclick="exportSelected()" style="background:#ff9800;border-color:#ff9800;">导出选中</button>
@@ -292,7 +293,11 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
 <div class="modal-overlay" id="importModal">
   <div class="modal">
     <h3>批量导入</h3>
-    <p class="hint">粘贴 Excel 数据（Tab 分隔）或上传 CSV 文件<br>列顺序：日期 样品编号 送样人 单位 样品状态 保存条件 溶剂 测试项目 优先级 状态 [付款状态]</p>
+    <p class="hint">粘贴 Excel 数据（Tab 分隔）或上传 CSV 文件<br>列顺序：日期 样品编号 送样人 单位 样品状态 保存条件 溶剂 测试项目 优先级 状态 付款状态 备注</p>
+    <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="downloadTemplate('xlsx')" style="background:#1565c0;color:#fff;border-color:#1565c0;">下载Excel模板</button>
+      <button class="btn" onclick="downloadTemplate('csv')">下载CSV模板</button>
+    </div>
     <textarea id="importText" placeholder="粘贴数据到此..."></textarea>
     <p class="hint">或选择文件：<input type="file" id="importFile" accept=".csv,.txt"></p>
     <div class="btn-row">
@@ -1214,6 +1219,23 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     document.getElementById('importText').value='';
     document.getElementById('importFile').value='';
   };
+  window.downloadTemplate=function(type){
+    var base = window.location.origin + window.location.pathname.replace(/[^\/]*$/,'');
+    var url, fname;
+    if(type==='xlsx'){
+      url = base + 'NMR批量导入模板.xlsx';
+      fname = 'NMR批量导入模板.xlsx';
+    } else {
+      url = base + 'NMR批量导入模板.csv';
+      fname = 'NMR批量导入模板.csv';
+    }
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   window.doImport=function(){
     var txt=document.getElementById('importText').value.trim();
     var fi=document.getElementById('importFile');
@@ -1258,7 +1280,22 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
       if(p.length<3) return;
       var dateStr=normalizeDate(p[0]);
       var remark='', feeAdjust='';
-      var remarkCol=p.length>=11?p[10]:(p.length>=10?p[9]:'');
+      // 新列顺序(12列)：p[10]=付款状态, p[11]=备注
+      // 向后兼容：旧11列格式 p[10]可能是备注
+      var remarkCol='';
+      var paymentStatus='未付款';
+      if(p.length>=12){
+        paymentStatus = p[10] || '未付款';
+        remarkCol = p[11] || '';
+      } else if(p.length>=11){
+        // 11列：判断p[10]是付款状态还是备注
+        var v10 = (p[10]||'').trim();
+        if(v10==='未付款' || v10==='已付款'){
+          paymentStatus = v10;
+        } else {
+          remarkCol = v10;
+        }
+      }
       if(remarkCol){
         var m=/\[([\+\-]?\d+元[折扣]*)\]$/.exec(remarkCol);
         if(m){
@@ -1349,7 +1386,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
         date:dateStr, sampleId:p[1]||'', submitter:p[2]||'', dept:p[3]||'',
         sampleStatus:p[4]||'固体', storage:p[5]||'室温', solvent:normalizeImportSolvent(p[6]),
         testItem:normalizeImportTestItem(p[7]), priority:p.length>=9?p[8]:'正常', status:p.length>=10?p[9]:'已测试',
-        paymentStatus: p.length>=11 ? (p[10]||'未付款') : '未付款',
+        paymentStatus: paymentStatus,
         remark:remark, feeAdjust:feeAdjust, createdAt:new Date().toISOString()
       };
       DATA.push(row); cnt++;
