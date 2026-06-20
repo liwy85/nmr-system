@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NMR 核磁测试登记表</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#f0f0f0; color:#222; font-family:'Segoe UI','Microsoft YaHei',sans-serif; min-height:100vh; }
+.container { max-width:1800px; margin:0 auto; padding:20px; }
+
+.top-bar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.top-bar h1 { font-size:20px; color:#4a148c; }
+.subtitle { font-size:12px; color:#888; margin-left:8px; }
+.btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { padding:7px 16px; border:1px solid #ccc; border-radius:6px; background:#e0e0e0; color:#222; cursor:pointer; font-size:13px; }
+.btn:hover { background:#d0d0d0; }
+.btn-primary { background:#7c4dff; color:#fff; border-color:#7c4dff; }
+.btn-primary:hover { background:#6b3dee; }
+.btn-success { background:#4caf50; color:#fff; border-color:#4caf50; }
+.btn-danger { background:#ff5252; color:#fff; border-color:#ff5252; }
+
+.search-bar { margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.search-input { flex:1; min-width:200px; padding:7px 12px; background:#fff; border:1px solid #ccc; border-radius:6px; color:#222; font-size:13px; }
+
+/* 多条件筛选栏 */
+.filter-bar { margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:9px 14px; background:#fff; border:1px solid #ddd; border-radius:8px; }
+.filter-bar .filter-item { display:flex; align-items:center; gap:5px; font-size:13px; color:#555; }
+.filter-bar .filter-item select { padding:5px 10px; border:1px solid #ccc; border-radius:5px; font-size:13px; color:#222; background:#fff; cursor:pointer; outline:none; max-width:200px; }
+.filter-bar .filter-item select:focus { border-color:#7c4dff; }
+.filter-bar .filter-reset { padding:5px 14px; border:1px solid #ccc; border-radius:5px; background:#f5f5f5; color:#555; cursor:pointer; font-size:13px; }
+.filter-bar .filter-reset:hover { background:#e8e8e8; }
+.filter-bar .filter-label { font-weight:600; color:#4a148c; }
+.table-wrap { background:#fff; border:1px solid #ddd; border-radius:8px; overflow:auto; max-height:70vh; }
+table { width:100%; border-collapse:collapse; min-width:1500px; }
+thead { position:sticky; top:0; z-index:10; }
+th { background:#e8e8e8; color:#4a148c; font-size:15px; font-weight:600; padding:8px 6px; text-align:left; border-bottom:2px solid #7c4dff; white-space:nowrap; }
+td { padding:6px 6px; border-bottom:1px solid #d0d0d0; font-size:15px; vertical-align:middle; color:#222; }
+tr:hover td { background:#d0d0d0 !important; }
+
+/* 逐行交替背景 - 直接对td设置，优先级最高 */
+tr.row-color-0 td { background:#ffcdd2 !important; color:#000 !important; font-weight:600; }
+tr.row-color-1 td { background:#c8e6c9 !important; color:#000 !important; font-weight:600; }
+tr.row-color-2 td { background:#fff9c4 !important; color:#000 !important; font-weight:600; }
+/* 鼠标悬停 */
+tr.row-color-0:hover td,
+tr.row-color-1:hover td,
+tr.row-color-2:hover td { background:#e8eaf6 !important; color:#000 !important; font-weight:600; }
+/* 表头行不参与交替 */
+tr.add-row td { background:transparent !important; color:#222 !important; }
+tr.add-row:hover td { background:transparent !important; color:#4a148c !important; font-weight:600; }
+
+/* 列宽 */
+.col-date        { width:105px; }
+.col-date .cell-input { font-weight:700; font-size:16px; }
+.col-sample-id   { width:110px; }
+.col-submitter    { width:100px; }
+.col-dept        { width:165px; }
+.col-sample-status { width:90px; }
+.col-storage     { width:80px; }
+.col-solvent     { width:190px; }
+.col-test-item    { width:130px; white-space:pre-line; }
+.col-test-item input { white-space:pre-line; }
+.col-priority     { width:70px; }
+.col-status       { width:90px; }
+/* 状态颜色 */
+.status-待测试 .cell-select { color:#d32f2f; font-weight:700; }
+.status-测试中 .cell-select { color:#e65100; font-weight:700; }
+.status-已测试 .cell-select { color:#2e7d32; font-weight:700; }
+.col-remark      { width:180px; }  
+.col-total-fee   { width:90px; text-align:center; font-weight:600; }
+.col-payment     { width:85px; text-align:center; }
+.col-actions      { width:36px; text-align:center; }
+.col-ck { width:40px; text-align:center; }
+
+/* 付款状态颜色 */
+.payment-未付款 .cell-select { color:#d32f2f; font-weight:700; }
+.payment-已付款 .cell-select { color:#2e7d32; font-weight:700; }
+
+/* 加费/折扣（在备注列内） */
+.fee-adjust-wrap { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.fee-adjust-sel { padding:2px 3px; background:#fff; border:1px solid #ccc; border-radius:3px; color:#222; font-size:15px; outline:none; cursor:pointer; }
+.fee-adjust-input { width:50px; padding:2px 4px; background:#fff; border:1px solid #ccc; border-radius:3px; color:#222; font-size:15px; text-align:center; outline:none; }
+.fee-adjust-input:focus { border-color:#7c4dff; }
+.fee-plus  { color:#e65100; }
+.fee-minus { color:#2e7d32; }
+.fee-dark  { color:#1a237e; font-size:15px; font-weight:700; }
+
+/* 新增记录行 */
+.add-row td { background:transparent !important; border-bottom:2px dashed #3a3a5c; }
+.add-row:hover td { background:#1e1e3a !important; }
+.add-row .add-btn {
+  display:inline-block; padding:6px 20px; background:#7c4dff; color:#fff;
+  border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
+}
+.add-row .add-btn:hover { background:#6b3dee; }
+
+.cell-input { width:100%; padding:4px 6px; background:transparent; border:1px solid transparent; border-radius:3px; color:#000; font-size:15px; font-weight:600; outline:none; }
+.cell-select { width:100%; padding:4px 6px; background:#fff; border:1px solid #ccc; border-radius:3px; color:#000; font-size:15px; font-weight:600; outline:none; cursor:pointer; }
+.cell-select option { background:#fff; color:#000; }
+
+/* 溶剂下拉 */
+.solvent-dropdown { position:fixed; z-index:9999; background:#fff; border:1px solid #7c4dff; border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.15); max-height:260px; overflow-y:auto; min-width:220px; display:none; }
+.solvent-dropdown .sd-item { padding:7px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #e0e0e0; color:#222; display:flex; justify-content:space-between; }
+.solvent-dropdown .sd-item:hover { background:#7c4dff; color:#fff; }
+.solvent-dropdown .sd-item:last-child { border-bottom:none; }
+.solvent-dropdown .sd-price { color:#e65100; font-size:15px; }
+.solvent-dropdown .sd-item:hover .sd-price { color:#fff; }
+
+.solvent-fee-free { color:#4caf50; font-size:15px; }
+.solvent-fee-paid { color:#1a237e; font-size:15px; font-weight:600; }
+.solvent-wrap { display:flex; flex-direction:column; gap:2px; }
+.solvent-fee-inline { font-size:15px; padding:2px 6px; }
+
+.action-btn { padding:3px 6px; border:none; border-radius:3px; cursor:pointer; font-size:15px; line-height:1; }
+.action-btn:hover { opacity:0.85; }
+.action-btn.del { background:transparent; color:#ff5252; }
+.action-btn.del:hover { background:#ff5252; color:#fff; }
+.action-btn.ins { background:transparent; color:#4a148c; }
+.action-btn.ins:hover { background:#4a148c; color:#fff; }
+
+.bottom-bar { display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:10px; }
+.row-count { font-size:15px; color:#888; }
+.total-fee-bar { font-size:14px; color:#1a237e; font-weight:600; }
+.empty-state { text-align:center; padding:60px 20px; color:#666; }
+
+/* Modal */
+.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:1000; display:none; justify-content:center; align-items:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:#fff; border:1px solid #ddd; border-radius:8px; padding:24px; min-width:500px; max-width:90vw; box-shadow:0 6px 24px rgba(0,0,0,0.15); }
+.modal h3 { margin-bottom:16px; color:#4a148c; }
+.modal textarea { width:100%; min-height:120px; padding:10px; background:#f9f9f9; border:1px solid #ccc; border-radius:4px; color:#222; font-size:13px; font-family:monospace; resize:vertical; outline:none; }
+.modal textarea:focus { border-color:#7c4dff; }
+.modal .hint { font-size:12px; color:#888; margin:8px 0; }
+.btn-row { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+
+/* 自定义确认对话框 */
+.confirm-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.3); z-index:2000; display:none; justify-content:center; align-items:center; }
+.confirm-overlay.active { display:flex; }
+.confirm-dialog { background:#fff; border:1px solid #ff5252; border-radius:10px; padding:28px 28px 20px; min-width:340px; max-width:90vw; box-shadow:0 8px 32px rgba(255,82,82,0.12); text-align:center; animation: confirmIn 0.18s ease-out; }
+@keyframes confirmIn { from { opacity:0; transform:scale(0.92) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.confirm-msg { font-size:15px; color:#222; margin-bottom:22px; line-height:1.6; }
+.confirm-btn-row { display:flex; gap:12px; justify-content:center; }
+.confirm-btn-row .btn { min-width:80px; padding:8px 20px; border-radius:6px; font-size:14px; }
+.confirm-btn-row .btn-danger { background:linear-gradient(135deg,#ff5252,#d32f2f); }
+.confirm-btn-row .btn-danger:hover { background:linear-gradient(135deg,#ff6e6e,#e53935); }
+
+/* 送样人/单位 下拉 */
+.person-dropdown { position:fixed; z-index:9998; background:#fff; border:1px solid #7c4dff; border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.15); max-height:260px; overflow-y:auto; min-width:160px; display:none; }
+.person-dropdown .pd-item { padding:6px 12px; cursor:pointer; font-size:15px; border-bottom:1px solid #e0e0e0; color:#222; display:flex; justify-content:space-between; align-items:center; }
+.person-dropdown .pd-item:hover { background:#7c4dff; color:#fff; }
+.person-dropdown .pd-item:last-child { border-bottom:none; }
+.person-dropdown .pd-del { background:transparent; border:none; color:#ff5252; cursor:pointer; font-size:14px; padding:0 4px; line-height:1; }
+.person-dropdown .pd-del:hover { color:#fff; background:#ff5252; border-radius:3px; }
+.person-input-wrap { display:flex; align-items:center; gap:4px; }
+.person-input-wrap .cell-input { flex:1; min-width:0; }
+.person-input-wrap .pd-trigger { background:transparent; border:1px solid #2a2a4a; border-radius:3px; color:#7c4dff; cursor:pointer; font-size:15px; padding:2px 5px; line-height:1; flex-shrink:0; }
+.person-input-wrap .pd-trigger:hover { background:#7c4dff; color:#fff; }
+
+/* 费用统计面板 */
+.stats-panel { background:#fff; border:1px solid #ddd; border-radius:8px; margin-top:16px; overflow:hidden; }
+.stats-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f5f0ff; cursor:pointer; user-select:none; }
+.stats-header:hover { background:#ece5ff; }
+.stats-title { font-size:14px; color:#4a148c; font-weight:600; }
+.stats-toggle { font-size:12px; color:#888; }
+.stats-body { padding:16px; display:none; }
+.stats-body.open { display:block; }
+.stats-month { margin-bottom:16px; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden; }
+.stats-month-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f9f5ff; cursor:pointer; }
+.stats-month-header:hover { background:#f0ebff; }
+.stats-month-name { font-size:13px; color:#222; font-weight:600; }
+.stats-month-total { font-size:13px; color:#e65100; font-weight:700; }
+.stats-month-body { padding:10px 14px; display:none; }
+.stats-month-body.open { display:block; }
+.stats-dept-row { display:flex; justify-content:space-between; align-items:center; padding:6px 10px; border-bottom:1px solid #f0f0f0; font-size:12px; }
+.stats-dept-row:last-child { border-bottom:none; }
+.stats-dept-name { color:#444; }
+.stats-dept-fee { color:#e65100; font-weight:600; }
+.stats-grand-total { padding:12px 16px; background:#f5f0ff; border-top:2px solid #7c4dff; display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+.stats-grand-label { color:#4a148c; font-weight:600; }
+.stats-grand-value { color:#e65100; font-weight:700; font-size:16px; }
+.stats-empty { text-align:center; padding:30px; color:#888; font-size:13px; }
+.testitem-wrap { display:flex; align-items:flex-start; gap:2px; }
+.testitem-input { min-height:32px; height:auto; resize:none; overflow:hidden; white-space:pre-line; font-size:15px; line-height:1.5; padding:4px 6px; }
+.testitem-dropdown { position:fixed; z-index:9999; background:#fff; border:1px solid #7c4dff; border-radius:6px; padding:4px 0; min-width:220px; max-height:350px; overflow-y:auto; display:none; box-shadow:0 4px 16px rgba(0,0,0,0.15); }
+.testitem-dropdown .ti-item { padding:5px 12px; cursor:pointer; font-size:15px; color:#222; display:flex; align-items:center; gap:6px; }
+.testitem-dropdown .ti-item:hover { background:#f0f0ff; }
+.testitem-dropdown .ti-group-label { padding:4px 12px; font-size:13px; color:#4a148c; font-weight:600; border-bottom:1px solid #e0e0e0; margin-top:2px; }
+.testitem-dropdown .ti-all { border-bottom:1px solid #e0e0e0; margin-bottom:2px; padding:5px 12px; display:flex; align-items:center; gap:6px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <div style="display:flex;align-items:baseline;flex-wrap:wrap;">
+      <h1>NMR 核磁测试登记表</h1>
+      <span class="subtitle">在线版 v2026-06-20 (多维筛选+付款状态)</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="showImport()">批量导入</button>
+      <button class="btn btn-danger" onclick="deleteSelected()">删除选中</button>
+      <button class="btn btn-success" onclick="exportCSV()">导出全部</button>
+      <button class="btn btn-success" onclick="exportSelected()" style="background:#ff9800;border-color:#ff9800;">导出选中</button>
+      <button class="btn btn-success" onclick="exportFiltered()" style="background:#00897b;border-color:#00897b;">导出筛选</button>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput"
+           placeholder="搜索送样人、单位、样品编号、备注..."
+           oninput="doSearch()">
+    <span style="font-size:12px;color:#888;" id="searchResult"></span>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <span class="filter-label">单位/部门：</span>
+      <select id="filterDept" onchange="doSearch()">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">月份：</span>
+      <select id="filterMonth" onchange="doSearch()">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">付款状态：</span>
+      <select id="filterPayment" onchange="doSearch()">
+        <option value="">全部</option>
+        <option value="未付款">未付款</option>
+        <option value="已付款">已付款</option>
+      </select>
+    </div>
+    <button class="filter-reset" onclick="resetFilters()">重置筛选</button>
+    <span style="font-size:12px;color:#888;margin-left:auto;" id="filterResult"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-ck"><input type="checkbox" onchange="toggleSelectAll(this)" title="全选/取消全选"></th>
+          <th class="col-date">登记日期</th>
+          <th class="col-sample-id">样品编号</th>
+          <th class="col-submitter">送样人</th>
+          <th class="col-dept">单位/部门</th>
+          <th class="col-sample-status">样品状态</th>
+          <th class="col-storage">保存条件</th>
+          <th class="col-solvent">溶剂/氘代试剂（费用）</th>
+          <th class="col-test-item">测试项目</th>
+          <th class="col-priority">优先级</th>
+          <th class="col-status">状态</th>
+          <th class="col-remark">备注/调整</th>
+          <th class="col-total-fee">费用合计</th>
+          <th class="col-payment">付款状态</th>
+          <th class="col-actions">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <p>暂无记录</p>
+    </div>
+  </div>
+
+  <div class="stats-panel" id="statsPanel">
+    <div class="stats-header" onclick="toggleStatsPanel()">
+      <span class="stats-title">📊 费用统计</span>
+      <span class="stats-toggle" id="statsToggle">展开 ▾</span>
+    </div>
+    <div class="stats-body" id="statsBody">
+      <div id="statsContent"></div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <span class="row-count" id="rowCount">0 条记录</span>
+    <span class="total-fee-bar" id="totalFeeBar"></span>
+  </div>
+
+  <div class="price-ref">
+    <strong style="color:#4a148c;">价格参考：</strong>
+    一维谱 — 1H谱(16ns):20元 | 13C谱(512ns):40元 | 13C谱(1024ns):60元 | 19F谱(64ns):25元 | 31P谱(64ns):30元 | 11B谱(64ns):30元 | DEPT45/90/135(512ns):40元 &nbsp;&nbsp;|&nbsp;&nbsp;
+    二维谱 — COSY(64ns):35元 | HSQC(512ns):40元 | NOESY:90元 | HMBC:100元 &nbsp;&nbsp;|&nbsp;&nbsp;
+    溶剂 — 氘代氯仿(CDCl₃)/氘代二甲亚砜(DMSO-d₆)/重水(D₂O) 免费，其他收费
+  </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <h3>批量导入</h3>
+    <p class="hint">粘贴 Excel 数据（Tab 分隔）或上传 CSV 文件<br>列顺序：日期 样品编号 送样人 单位 样品状态 保存条件 溶剂 测试项目 优先级 状态 [付款状态]</p>
+    <textarea id="importText" placeholder="粘贴数据到此..."></textarea>
+    <p class="hint">或选择文件：<input type="file" id="importFile" accept=".csv,.txt"></p>
+    <div class="btn-row">
+      <button class="btn" onclick="hideImport()">取消</button>
+      <button class="btn btn-primary" onclick="doImport()">导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <div class="confirm-msg" id="confirmMsg">确定删除？</div>
+    <div class="confirm-btn-row">
+      <button class="btn" onclick="hideConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirmOk" onclick="doConfirm()">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // 同源 API：后端与前端部署在同一服务，API 地址即当前站点源
+  var API = location.origin;
+  var USE_API = true;
+  var DATA = [];
+
+  var SOLVENTS = [
+    {n:'无溶剂',                p:0},
+    {n:'氘代氯仿(CDCl₃)',     p:0},
+    {n:'氘代二甲亚砜(DMSO-d₆)',p:0},
+    {n:'重水(D₂O)',             p:0},
+    {n:'氘代丙酮(C₃D₆O)',     p:25},
+    {n:'氘代乙腈(CD₃CN-d₃)',  p:25},
+    {n:'氘代乙酸(CD₃COOH-d₄)', p:30},
+    {n:'氘代盐酸(DCl)',         p:30},
+    {n:'氘代吡啶(Py-d₅)',     p:70},
+    {n:'氘代三氟乙酸(CF₃COOD)',p:35}
+  ];
+
+  var SOLVENT_MAP = {
+    'DMSO-d₆':'氘代二甲亚砜(DMSO-d₆)',
+    'D₂O':'重水(D₂O)',
+    '重水':'重水(D₂O)',
+    '氘代氯仿':'氘代氯仿(CDCl₃)',
+    '氘代氯仿（CDCl₃）':'氘代氯仿(CDCl₃)',
+    '氘代丙酮':'氘代丙酮(C₃D₆O)',
+    '氘代丙酮(丙酮-d₆)':'氘代丙酮(C₃D₆O)',
+    '氘代乙腈':'氘代乙腈(CD₃CN-d₃)',
+    '氘代乙腈(乙腈-d₃)':'氘代乙腈(CD₃CN-d₃)',
+    '氘代乙酸':'氘代乙酸(CD₃COOH-d₄)',
+    '氘代乙酸(乙酸-d₄)':'氘代乙酸(CD₃COOH-d₄)',
+    '氘代盐酸':'氘代盐酸(DCl)',
+    '氘代吡啶':'氘代吡啶(Py-d₅)',
+    '氘代吡啶(吡啶-d₅)':'氘代吡啶(Py-d₅)',
+    '氘代三氟乙酸':'氘代三氟乙酸(CF₃COOD)'
+  };
+
+  var SUBMITTER_LIST = ['李俊凯','徐志红','姜春风'];
+  var DEPT_LIST = ['长江大学','辽宁科技学院'];
+
+  function loadPersonLists(){
+    try {
+      var s = localStorage.getItem('nmrSubmitters');
+      if(s){ var a = JSON.parse(s); if(Array.isArray(a) && a.length) SUBMITTER_LIST = a; }
+    } catch(e){}
+    try {
+      var d = localStorage.getItem('nmrDepts');
+      if(d){ var b = JSON.parse(d); if(Array.isArray(b) && b.length) DEPT_LIST = b; }
+    } catch(e){}
+  }
+
+  function savePersonLists(){
+    try { localStorage.setItem('nmrSubmitters', JSON.stringify(SUBMITTER_LIST)); } catch(e){}
+    try { localStorage.setItem('nmrDepts', JSON.stringify(DEPT_LIST)); } catch(e){}
+  }
+
+  function ensureInList(arr, val){
+    if(val && arr.indexOf(val) === -1) { arr.push(val); savePersonLists(); }
+  }
+
+  function removeFromList(arr, val){
+    var idx = arr.indexOf(val);
+    if(idx !== -1) { arr.splice(idx, 1); savePersonLists(); }
+  }
+
+  var TEST_ITEMS = {
+    '1H谱(16ns)':       20,
+    '13C谱(512ns)':     40,
+    '13C谱(1024ns)':    60,
+    '19F谱(64ns)':      25,
+    '31P谱(64ns)':      30,
+    '11B谱(64ns)':      30,
+    'DEPT45(512ns)':    40,
+    'DEPT90(512ns)':    40,
+    'DEPT135(512ns)':   40,
+    'COSY (64ns)':      35,
+    'HSQC (512ns)':     40,
+    'NOESY (H-H)':     90,
+    'HMBC (H-C)':      100,
+    '其他':                0
+  };
+
+  function getSolventPrice(name){
+    for(var i=0;i<SOLVENTS.length;i++){
+      if(SOLVENTS[i].n===name) return SOLVENTS[i].p;
+    }
+    return 0;
+  }
+
+  function getTestFee(itemStr){
+    if(!itemStr) return 0;
+    var items = itemStr.split(',');
+    var total = 0;
+    for(var i=0; i<items.length; i++){
+      var item = items[i].trim();
+      if(item) total += (TEST_ITEMS[item] || 0);
+    }
+    return total;
+  }
+
+  // 修改：彻底移除了额外的超时费用计算逻辑
+  function calcRowFee(row){
+    var solventFee = getSolventPrice(row.solvent);
+    var testFee   = getTestFee(row.testItem);
+    var adjust = 0;
+    if(row.feeAdjust){
+      var a = parseFloat(row.feeAdjust);
+      if(!isNaN(a)) adjust = a;
+    }
+    return solventFee + testFee + adjust;
+  }
+
+  // 修复：ID 生成追加随机数，防止导入极速碰撞 Bug
+  function genId(){
+    var d=new Date(),Y=String(d.getFullYear()).slice(2),
+        M=String(d.getMonth()+1).padStart(2,'0'),
+        D=String(d.getDate()).padStart(2,'0'),
+        h=String(d.getHours()).padStart(2,'0'),
+        m=String(d.getMinutes()).padStart(2,'0'),
+        s=String(d.getSeconds()).padStart(2,'0'),
+        ms=String(d.getMilliseconds()).padStart(3,'0');
+    var rnd = Math.floor(Math.random()*10000).toString().padStart(4,'0');
+    return 'NMR-'+Y+M+D+'-'+h+m+s+'-'+ms+'-'+rnd;
+  }
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+  // 修复：提取 CSV 安全转义函数，处理导出的英文逗号干扰
+  function safeCSV(str) {
+    return (str || '').toString().replace(/,/g, '，').replace(/\r?\n/g, ' ').trim();
+  }
+
+  function render(){
+    if(!DATA) DATA=[];
+    DATA.sort(function(a,b){
+      var da=a.date||'',db=b.date||'';
+      return da>db?-1:(da<db?1:0);
+    });
+
+    var tbody=document.getElementById('tbody');
+    var empty=document.getElementById('emptyState');
+    var rc=document.getElementById('rowCount');
+    if(!tbody||!empty||!rc) return;
+
+    rc.textContent=DATA.length+' 条记录';
+    empty.style.display=DATA.length===0?'block':'none';
+
+    var exist={};
+    var oldTrs=tbody.querySelectorAll('tr[data-id]');
+    for(var i=0;i<oldTrs.length;i++){ var id=oldTrs[i].getAttribute('data-id'); if(id) exist[id]=oldTrs[i]; }
+
+    var frag=document.createDocumentFragment();
+    var prevDate='';  
+    var colorIdx=0;   
+    for(var i=0;i<DATA.length;i++){
+      var row=DATA[i];
+      if(row.date !== prevDate){
+        colorIdx = (prevDate===''?0:(colorIdx+1)%3);
+        prevDate = row.date;
+      }
+      var tr=exist[row.id];
+      if(tr){
+        updateRow(tr,row);
+        tr.className = 'row-color-'+colorIdx;
+        frag.appendChild(tr);
+        delete exist[row.id];
+      } else {
+        tr=createRow(row);
+        tr.className = 'row-color-'+colorIdx;
+        frag.appendChild(tr);
+      }
+    }
+    for(var k in exist){ if(exist.hasOwnProperty(k)) exist[k].remove(); }
+
+    var addTr=document.createElement('tr');
+    addTr.className='add-row';
+    addTr.innerHTML='<td colspan="15" style="text-align:center;padding:12px;">'+
+      '<button class="add-btn" onclick="addRow()">＋ 新增记录</button>'+
+      '</td>';
+
+    tbody.innerHTML='';
+    tbody.appendChild(addTr);
+    tbody.appendChild(frag);
+
+    updateTotalFee();
+    syncHeaderCk();
+    populateFilters();
+    if(STATS_OPEN) renderStats();
+    doSearch(); // 渲染后保持筛选状态
+  }
+
+  function buildFeeHtml(row){
+    var fee = calcRowFee(row);
+    return '<span class="fee-dark">'+fee+' 元</span>';
+  }
+
+  function buildSolventFeeInline(solvent){
+    var fee = getSolventPrice(solvent);
+    return fee>0
+      ? '<span class="solvent-fee-paid">+'+fee+'元</span>'
+      : '<span class="solvent-fee-free">免费</span>';
+  }
+
+  // Fix 6: 文本框高度自适应
+  function autoResizeTextarea(el){
+    if(!el) return;
+    el.style.height='auto';
+    el.style.height=el.scrollHeight+'px';
+  }
+  function autoResizeAllTestItems(){
+    var inputs=document.querySelectorAll('.testitem-input');
+    for(var i=0;i<inputs.length;i++) autoResizeTextarea(inputs[i]);
+  }
+
+  function buildTestItemDisplay(itemStr){
+    if(!itemStr) return '';
+    return itemStr.split(',').join('\n');
+  }
+
+  function createRow(row){
+    var tr=document.createElement('tr');
+    tr.setAttribute('data-id',row.id);
+
+    tr.innerHTML=
+      '<td class="col-ck"><input type="checkbox" class="ck" data-id="'+row.id+'" onchange="syncHeaderCk()"></td>'+
+      '<td class="col-date"><input class="cell-input" type="date" value="'+(row.date||'')+'" onchange="cellChange(this)" data-field="date"></td>'+
+      '<td class="col-sample-id"><input class="cell-input" value="'+esc(row.sampleId||'')+'" placeholder="样品编号" onblur="cellChange(this)" data-field="sampleId"></td>'+
+      '<td class="col-submitter"><div class="person-input-wrap"><input class="cell-input" value="'+esc(row.submitter||'')+'" placeholder="送样人" onblur="personInputBlur(this,\'submitter\')" data-field="submitter"><button class="pd-trigger" onclick="showPersonDropdown(this,\'submitter\')" title="选择送样人">▾</button></div></td>'+
+      '<td class="col-dept"><div class="person-input-wrap"><input class="cell-input" value="'+esc(row.dept||'')+'" placeholder="单位/部门" onblur="personInputBlur(this,\'dept\')" data-field="dept"><button class="pd-trigger" onclick="showPersonDropdown(this,\'dept\')" title="选择单位">▾</button></div></td>'+
+      '<td class="col-sample-status"><select class="cell-select" onchange="cellChange(this)" data-field="sampleStatus">'+
+        '<option value="">请选择</option>'+
+        '<option value="固体"'+(row.sampleStatus==='固体'?' selected':'')+'>固体</option>'+
+        '<option value="液体"'+(row.sampleStatus==='液体'?' selected':'')+'>液体</option>'+
+        '<option value="溶解液体"'+(row.sampleStatus==='溶解液体'?' selected':'')+'>溶解液体</option>'+
+      '</select></td>'+
+      '<td class="col-storage"><select class="cell-select" onchange="cellChange(this)" data-field="storage">'+
+        '<option value="">请选择</option>'+
+        '<option value="室温"'+(row.storage==='室温'?' selected':'')+'>室温</option>'+
+        '<option value="冷藏"'+(row.storage==='冷藏'?' selected':'')+'>冷藏</option>'+
+        '<option value="冷冻"'+(row.storage==='冷冻'?' selected':'')+'>冷冻</option>'+
+      '</select></td>'+
+      '<td class="col-solvent"><div class="solvent-wrap"><input class="cell-input solvent-input" readonly value="'+esc(row.solvent||'')+'" style="cursor:pointer;" onclick="showSolvent(this)"><span class="solvent-fee-inline">'+buildSolventFeeInline(row.solvent)+'</span></div></td>'+
+      '<td class="col-test-item"><div class="testitem-wrap"><textarea class="cell-input testitem-input" readonly placeholder="点击选择" style="cursor:pointer;resize:none;overflow:hidden;" onclick="showTestItem(this)" data-val="'+(row.testItem||'')+'">'+esc(buildTestItemDisplay(row.testItem))+'</textarea><button class="pd-trigger" onclick="showTestItem(this)" title="选择测试项目">▾</button></div></td>'+
+          '<td class="col-priority"><select class="cell-select" onchange="cellChange(this)" data-field="priority">'+
+          '<option value="正常"'+(row.priority==='正常'?' selected':'')+'>正常</option>'+
+          '<option value="加急"'+(row.priority==='加急'?' selected':'')+'>加急</option>'+
+          '</select></td>'+
+          '<td class="col-status status-'+esc(row.status||'待测试')+'"><select class="cell-select" onchange="cellChange(this)" data-field="status">'+
+            '<option value="待测试"'+(row.status==='待测试'?' selected':'')+'>待测试</option>'+
+            '<option value="测试中"'+(row.status==='测试中'?' selected':'')+'>测试中</option>'+
+            '<option value="已测试"'+(row.status==='已测试'?' selected':'')+'>已测试</option>'+
+          '</select></td>'+
+          '<td class="col-remark">'+
+            '<div style="display:flex;flex-direction:column;gap:4px;">'+
+              '<input class="cell-input" value="'+esc(row.remark||'')+'" placeholder="备注信息" onblur="remarkChange(this)" data-field="remark" style="width:100%;">'+
+              '<div>'+buildFeeAdjustHtml(row)+'</div>'+
+            '</div></td>'+
+          '<td class="col-total-fee" data-fee="'+calcRowFee(row)+'">'+buildFeeHtml(row)+'</td>'+
+          '<td class="col-payment payment-'+esc(row.paymentStatus||'未付款')+'"><select class="cell-select" onchange="cellChange(this)" data-field="paymentStatus">'+
+            '<option value="未付款"'+((row.paymentStatus||'未付款')==='未付款'?' selected':'')+'>未付款</option>'+
+            '<option value="已付款"'+(row.paymentStatus==='已付款'?' selected':'')+'>已付款</option>'+
+          '</select></td>'+
+          '<td class="col-actions"><div style="display:flex;flex-direction:column;gap:4px;align-items:center;">'+
+            '<button class="action-btn ins" onclick="insertRowAbove(\''+row.id+'\')" title="在上方插入新行">∧</button>'+
+            '<button class="action-btn ins" onclick="insertRowBelow(\''+row.id+'\')" title="在下方插入新行">∨</button>'+
+            '<button class="action-btn del" onclick="delRow(\''+row.id+'\')" title="删除此行">✕</button>'+
+          '</div></td>';
+    // Fix 6: 渲染后自适应高度
+    setTimeout(function(){ autoResizeAllTestItems(); }, 50);
+    return tr;
+  }
+
+  function updateRow(tr,row){
+    var inputs=tr.querySelectorAll('.cell-input[data-field]');
+    for(var i=0;i<inputs.length;i++){
+      var f=inputs[i].getAttribute('data-field')||'';
+      if(f==='date') inputs[i].value=row.date||'';
+      if(f==='sampleId') inputs[i].value=row.sampleId||'';
+      if(f==='submitter') inputs[i].value=row.submitter||'';
+      if(f==='dept') inputs[i].value=row.dept||'';
+      if(f==='remark') inputs[i].value=row.remark||'';
+    }
+    var si=tr.querySelector('.solvent-input');
+    if(si) si.value=row.solvent||'';
+    var feeInline=tr.querySelector('.solvent-fee-inline');
+    if(feeInline) feeInline.innerHTML=buildSolventFeeInline(row.solvent);
+    var ti=tr.querySelector('.testitem-input');
+    if(ti){ ti.value=buildTestItemDisplay(row.testItem); ti.setAttribute('data-val',row.testItem||''); autoResizeTextarea(ti); }
+    var totalTd=tr.querySelector('.col-total-fee');
+    if(totalTd){
+      totalTd.setAttribute('data-fee',calcRowFee(row));
+      totalTd.innerHTML=buildFeeHtml(row);
+    }
+    var sel1=tr.querySelector('[data-field="sampleStatus"]');
+    if(sel1) sel1.value=row.sampleStatus||'固体';
+    var sel2=tr.querySelector('[data-field="storage"]');
+    if(sel2) sel2.value=row.storage||'';
+    var sel4=tr.querySelector('[data-field="priority"]');
+    if(sel4) sel4.value=row.priority||'正常';
+    var sel5=tr.querySelector('[data-field="status"]');
+    if(sel5){
+      sel5.value=row.status||'待测试';
+      var statusTd = sel5.closest('td');
+      if(statusTd){
+        statusTd.classList.remove('status-待测试','status-测试中','status-已测试');
+        statusTd.classList.add('status-'+(row.status||'待测试'));
+      }
+    }
+    var sel6=tr.querySelector('[data-field="paymentStatus"]');
+    if(sel6){
+      var payStatus=row.paymentStatus||'未付款';
+      sel6.value=payStatus;
+      var payTd = sel6.closest('td');
+      if(payTd){
+        payTd.classList.remove('payment-未付款','payment-已付款');
+        payTd.classList.add('payment-'+payStatus);
+      }
+    }
+    var adjContainer=tr.querySelector('.fee-adjust-container[data-rowid="'+row.id+'"]');
+    if(adjContainer) adjContainer.innerHTML=buildFeeAdjustHtml(row);
+  }
+
+  function updateTotalFee(){
+    var bar=document.getElementById('totalFeeBar');
+    if(!bar) return;
+    var total=0;
+    // 只统计未被搜索过滤掉的数据
+    var trs = document.querySelectorAll('#tbody tr[data-id]');
+    var count = 0;
+    for(var i=0;i<trs.length;i++){
+      if(trs[i].style.display !== 'none'){
+        var row = getRow(trs[i].getAttribute('data-id'));
+        if(row) { total+=calcRowFee(row); count++; }
+      }
+    }
+    bar.textContent='可见费用合计：'+total+' 元（显示 '+count+' 条）';
+  }
+
+  function save(){
+    if(!DATA) DATA=[];
+    try { localStorage.setItem('nmrData', JSON.stringify(DATA)); } catch(e){}
+    if(USE_API){
+      fetch(API+'/api/rows/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA)}).catch(function(){});
+    }
+  }
+
+  window.addRow=function(){
+    DATA.unshift({
+      id:genId(),
+      date:new Date().toISOString().slice(0,10),
+      sampleId:'', submitter:'', dept:'',
+      sampleStatus:'固体', storage:'室温', solvent:'氘代氯仿(CDCl₃)',
+      testItem:'', priority:'正常', status:'已测试',
+      paymentStatus:'未付款',
+      remark:'', feeAdjust:'', createdAt:new Date().toISOString()
+    });
+    save(); render();
+    var tbody=document.getElementById('tbody');
+    if(tbody){
+      var rows=tbody.querySelectorAll('tr[data-id]');
+      if(rows.length>0) rows[0].scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  };
+
+  function newRowObj(){
+    return {
+      id:genId(), date:new Date().toISOString().slice(0,10),
+      sampleId:'', submitter:'', dept:'', sampleStatus:'固体', storage:'室温',
+      solvent:'氘代氯仿(CDCl₃)', testItem:'', priority:'正常', status:'已测试',
+      paymentStatus:'未付款',
+      remark:'', feeAdjust:'', createdAt:new Date().toISOString()
+    };
+  }
+
+  window.insertRowAbove=function(id){
+    var idx=-1;
+    for(var i=0;i<DATA.length;i++){ if(DATA[i].id===id){ idx=i; break; } }
+    if(idx===-1) return;
+    DATA.splice(idx,0,newRowObj());
+    save(); render();
+  };
+
+  window.insertRowBelow=function(id){
+    var idx=-1;
+    for(var i=0;i<DATA.length;i++){ if(DATA[i].id===id){ idx=i; break; } }
+    if(idx===-1) return;
+    DATA.splice(idx+1,0,newRowObj());
+    save(); render();
+  };
+
+  window.cellChange=function(el){
+    var tr=el.closest('tr'); if(!tr) return;
+    var id=tr.getAttribute('data-id'); var row=getRow(id); if(!row) return;
+    var field=el.getAttribute('data-field')||'';
+    if(field){ row[field]=el.value; }
+    save(); refreshFee(tr,row);
+    if(field==='status'){
+      var statusTd = el.closest('td');
+      if(statusTd){
+        statusTd.classList.remove('status-待测试','status-测试中','status-已测试');
+        statusTd.classList.add('status-'+(el.value||'待测试'));
+      }
+    }
+    if(field==='paymentStatus'){
+      var payTd = el.closest('td');
+      if(payTd){
+        payTd.classList.remove('payment-未付款','payment-已付款');
+        payTd.classList.add('payment-'+(el.value||'未付款'));
+      }
+    }
+  };
+
+  window.remarkChange=function(el){
+    var tr=el.closest('tr'); if(!tr) return;
+    var id=tr.getAttribute('data-id'); var row=getRow(id); if(!row) return;
+    row.remark=el.value; save();
+  };
+
+  function buildFeeAdjustHtml(row){
+    var adj = parseFloat(row.feeAdjust) || 0;
+    var selVal = adj > 0 ? 'plus' : adj < 0 ? 'minus' : 'none';
+    var amt = adj === 0 ? '' : Math.abs(adj);
+    return '<span class="fee-adjust-container" data-rowid="'+row.id+'">'+
+      '<div class="fee-adjust-wrap">'+
+        '<select class="fee-adjust-sel" onchange="feeAdjustTypeChange(this)" title="费用调整">'+
+          '<option value="none"'+(selVal==='none'?' selected':'')+'>无调整</option>'+
+          '<option value="plus"'+(selVal==='plus'?' selected':'')+'>加费 +</option>'+
+          '<option value="minus"'+(selVal==='minus'?' selected':'')+'>折扣 -</option>'+
+        '</select>'+
+        (selVal!=='none' ?
+          '<input class="fee-adjust-input '+(adj>0?'fee-plus':'fee-minus')+'" type="number" min="1" value="'+amt+'" onblur="feeAdjustAmtChange(this)" placeholder="金额" title="调整金额（元）">' :
+          '')+
+      '</div></span>';
+  }
+
+  window.feeAdjustTypeChange=function(sel){
+    var tr=sel.closest('tr'); if(!tr) return;
+    var id=tr.getAttribute('data-id'); var row=getRow(id); if(!row) return;
+    var val=sel.value;
+    if(val==='none'){ row.feeAdjust=''; }
+    else if(val==='plus'){ row.feeAdjust='50'; }
+    else { row.feeAdjust='-50'; }
+    save();
+    var container=tr.querySelector('.fee-adjust-container[data-rowid="'+row.id+'"]');
+    if(container) container.innerHTML=buildFeeAdjustHtml(row);
+    refreshFee(tr,row);
+  };
+
+  // Fix 4: 费用微调后重渲染调整容器，确保 UI 与数据同步
+  window.feeAdjustAmtChange=function(inp){
+    var tr=inp.closest('tr'); if(!tr) return;
+    var id=tr.getAttribute('data-id'); var row=getRow(id); if(!row) return;
+    var sel=tr.querySelector('.fee-adjust-sel');
+    var isPlus = (sel && sel.value === 'plus');
+    var v=parseFloat(inp.value)||0;
+    if(v<=0){ row.feeAdjust = ''; }
+    else { row.feeAdjust = isPlus ? String(v) : '-'+String(v); }
+    save();
+    // Fix 4: 重渲染调整容器
+    var adjContainer=tr.querySelector('.fee-adjust-container[data-rowid="'+row.id+'"]');
+    if(adjContainer) adjContainer.innerHTML=buildFeeAdjustHtml(row);
+    refreshFee(tr,row);
+  };
+
+  function refreshFee(tr,row){
+    var totalTd=tr.querySelector('.col-total-fee');
+    if(totalTd){
+      totalTd.setAttribute('data-fee',calcRowFee(row));
+      totalTd.innerHTML=buildFeeHtml(row);
+    }
+    updateTotalFee();
+  }
+
+  var _confirmOk = null;
+  var _confirmCancel = null;
+
+  window.showConfirm = function(msg, onOk, onCancel){
+    document.getElementById('confirmMsg').textContent = msg;
+    _confirmOk = onOk || null;
+    _confirmCancel = onCancel || null;
+    document.getElementById('confirmOverlay').classList.add('active');
+  };
+
+  window.hideConfirm = function(){
+    document.getElementById('confirmOverlay').classList.remove('active');
+    if(_confirmCancel) _confirmCancel();
+    _confirmOk = null;
+    _confirmCancel = null;
+  };
+
+  window.doConfirm = function(){
+    var ok = _confirmOk;
+    hideConfirm();
+    if(ok) ok();
+  };
+
+  window.delRow=function(id){
+    showConfirm('确定删除？', function(){
+      DATA=DATA.filter(function(r){return r.id!==id;});
+      if(USE_API) fetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+      save(); render();
+    });
+  };
+
+  // 修复：批量删除时，同步调取后端的 Delete API 确保两端同步
+  window.deleteSelected=function(){
+    var cks=document.querySelectorAll('#tbody .ck:checked');
+    if(cks.length===0){alert('请先选择');return;}
+    showConfirm('删除选中的 '+cks.length+' 条？', function(){
+      var ids=[];
+      for(var i=0;i<cks.length;i++){
+        var id = cks[i].getAttribute('data-id');
+        ids.push(id);
+        if(USE_API) fetch(API+'/api/rows/'+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+      }
+      DATA=DATA.filter(function(r){return ids.indexOf(r.id)===-1;});
+      save(); render();
+    });
+  };
+
+  function getRow(id){
+    for(var i=0;i<DATA.length;i++) if(DATA[i].id===id) return DATA[i];
+    return null;
+  }
+
+  var _dropdown=null;
+  window.showSolvent=function(el){
+    if(_dropdown){ _dropdown.remove(); _dropdown=null; return; }
+    var panel=document.createElement('div');
+    panel.className='solvent-dropdown';
+    SOLVENTS.forEach(function(s){
+      var item=document.createElement('div'); item.className='sd-item';
+      var nameSpan=document.createElement('span'); nameSpan.textContent=s.n;
+      var priceSpan=document.createElement('span'); priceSpan.className='sd-price';
+      priceSpan.textContent=s.p>0 ? s.p+'元' : '免费';
+      item.appendChild(nameSpan); item.appendChild(priceSpan);
+      item.onclick=function(e){
+        e.stopPropagation(); el.value=s.n;
+        var tr=el.closest('tr'); var id=tr.getAttribute('data-id'); var row=getRow(id);
+        if(row){ row.solvent=s.n; } save();
+        if(tr){
+          var si=tr.querySelector('.solvent-input'); if(si) si.value=s.n;
+          var feeInline=tr.querySelector('.solvent-fee-inline'); if(feeInline) feeInline.innerHTML=buildSolventFeeInline(s.n);
+          refreshFee(tr,row);
+        }
+        panel.remove(); _dropdown=null;
+      };
+      panel.appendChild(item);
+    });
+    document.body.appendChild(panel); _dropdown=panel;
+    var rect=el.getBoundingClientRect(); var ph=SOLVENTS.length*40+10; var top=rect.bottom+2;
+    if(rect.bottom+ph>window.innerHeight && rect.top>ph) top=rect.top-ph-2;
+    panel.style.top=top+'px'; panel.style.left=rect.left+'px'; panel.style.display='block';
+    setTimeout(function(){
+      document.addEventListener('click',function h(e){
+        if(!panel.contains(e.target)&&e.target!==el){ panel.remove(); _dropdown=null; document.removeEventListener('click',h); }
+      });
+    },10);
+  };
+
+  var _testitemDropdown=null;
+  window.showTestItem=function(el){
+    if(_testitemDropdown){ _testitemDropdown.remove(); _testitemDropdown=null; return; }
+    var tr=el.closest('tr'); var id=tr.getAttribute('data-id'); var row=getRow(id);
+    var curVal=row&&row.testItem||'';
+    function normalizeItemName(name){ return name.replace(/\s+/g,''); }
+    var curItems=curVal?curVal.split(',').map(function(s){return normalizeItemName(s.trim());}):[];
+    function isChecked(item){
+      var normItem=normalizeItemName(item);
+      for(var i=0;i<curItems.length;i++){ if(curItems[i]===normItem) return true; }
+      return false;
+    }
+
+    var panel=document.createElement('div'); panel.className='testitem-dropdown';
+    var allDiv=document.createElement('div'); allDiv.className='ti-item ti-all';
+    var allCk=document.createElement('input'); allCk.type='checkbox';
+    allCk.checked=(curItems.length===Object.keys(TEST_ITEMS).length-1);
+    allDiv.appendChild(allCk); allDiv.appendChild(document.createTextNode('全选'));
+    allCk.onchange=function(){
+      var cks=panel.querySelectorAll('.ti-item:not(.ti-all) input[type="checkbox"]');
+      for(var i=0;i<cks.length;i++) cks[i].checked=allCk.checked;
+    };
+    panel.appendChild(allDiv);
+
+    var grp1=document.createElement('div'); grp1.className='ti-group-label'; grp1.textContent='一维谱'; panel.appendChild(grp1);
+    var ywItems=['1H谱(16ns)','13C谱(512ns)','13C谱(1024ns)','19F谱(64ns)','31P谱(64ns)','11B谱(64ns)','DEPT45(512ns)','DEPT90(512ns)','DEPT135(512ns)'];
+    ywItems.forEach(function(item){
+      var div=document.createElement('div'); div.className='ti-item';
+      var ck=document.createElement('input'); ck.type='checkbox'; ck.checked=isChecked(item);
+      div.appendChild(ck); div.appendChild(document.createTextNode(item+'（'+(TEST_ITEMS[item]||0)+'元/样）'));
+      div.onclick=function(e){
+        if(e.target.tagName!=='INPUT') ck.checked=!ck.checked;
+        var newItems=[]; var cks=panel.querySelectorAll('.ti-item:not(.ti-all) input[type="checkbox"]:checked');
+        for(var i=0;i<cks.length;i++){ newItems.push(cks[i].parentElement.textContent.replace(/（\d+元\/样）/,'').trim()); }
+        var newVal=newItems.join(','); if(row) row.testItem=newVal;
+        var inp=tr.querySelector('.testitem-input');
+        if(inp){ inp.value=buildTestItemDisplay(newVal); inp.setAttribute('data-val',newVal); }
+        save(); refreshFee(tr,row);
+      };
+      panel.appendChild(div);
+    });
+
+    var grp2=document.createElement('div'); grp2.className='ti-group-label'; grp2.textContent='二维谱'; panel.appendChild(grp2);
+    var ewItems=['COSY (64ns)','HSQC (512ns)','NOESY (H-H)','HMBC (H-C)'];
+    ewItems.forEach(function(item){
+      var div=document.createElement('div'); div.className='ti-item';
+      var ck=document.createElement('input'); ck.type='checkbox'; ck.checked=isChecked(item);
+      div.appendChild(ck); div.appendChild(document.createTextNode(item+'（'+(TEST_ITEMS[item]||0)+'元/样）'));
+      div.onclick=function(e){
+        if(e.target.tagName!=='INPUT') ck.checked=!ck.checked;
+        var newItems=[]; var cks=panel.querySelectorAll('.ti-item:not(.ti-all) input[type="checkbox"]:checked');
+        for(var i=0;i<cks.length;i++){ newItems.push(cks[i].parentElement.textContent.replace(/（\d+元\/样）/,'').trim()); }
+        var newVal=newItems.join(','); if(row) row.testItem=newVal;
+        var inp=tr.querySelector('.testitem-input');
+        if(inp){ inp.value=buildTestItemDisplay(newVal); inp.setAttribute('data-val',newVal); }
+        save(); refreshFee(tr,row);
+      };
+      panel.appendChild(div);
+    });
+
+    document.body.appendChild(panel); _testitemDropdown=panel;
+    var rect=el.getBoundingClientRect(); var ph=panel.offsetHeight||300; var top=rect.bottom+2;
+    if(rect.bottom+ph>window.innerHeight && rect.top>ph) top=rect.top-ph-2;
+    panel.style.top=top+'px'; panel.style.left=rect.left+'px'; panel.style.display='block';
+    setTimeout(function(){
+      document.addEventListener('click',function h(e){
+        if(!panel.contains(e.target)&&e.target!==el&&!el.contains(e.target)){ panel.remove(); _testitemDropdown=null; document.removeEventListener('click',h); }
+      });
+    },10);
+  };
+
+  var _personDropdown = null;
+  window.showPersonDropdown = function(btn, type){
+    var wrap = btn.closest('.person-input-wrap'); if(!wrap) return;
+    var input = wrap.querySelector('.cell-input');
+    if(_personDropdown){ _personDropdown.remove(); _personDropdown=null; if(window.__pdInput===input) return; }
+    var list = type==='submitter' ? SUBMITTER_LIST : DEPT_LIST;
+    var panel = document.createElement('div'); panel.className = 'person-dropdown';
+
+    list.forEach(function(name){
+      var item = document.createElement('div'); item.className = 'pd-item';
+      var nameSpan = document.createElement('span'); nameSpan.textContent = name; nameSpan.style.flex = '1'; nameSpan.style.cursor = 'pointer';
+      nameSpan.onclick = function(e){
+        e.stopPropagation(); input.value = name;
+        var tr = input.closest('tr'); var id = tr.getAttribute('data-id'); var row = getRow(id);
+        if(row){ row[type] = name; } save();
+        panel.remove(); _personDropdown=null; window.__pdInput = null;
+      };
+      var delBtn = document.createElement('button'); delBtn.className = 'pd-del'; delBtn.textContent = '✕';
+      delBtn.onclick = function(e){
+        e.stopPropagation(); var nm = name; var tp = type;
+        showConfirm('确定删除"'+nm+'"？', function(){
+          if(tp==='submitter') removeFromList(SUBMITTER_LIST, nm); else removeFromList(DEPT_LIST, nm);
+          panel.remove(); _personDropdown=null; setTimeout(function(){ showPersonDropdown(btn, tp); }, 50);
+        });
+      };
+      item.appendChild(nameSpan); item.appendChild(delBtn); panel.appendChild(item);
+    });
+
+    if(list.length===0){
+      var empty = document.createElement('div'); empty.className = 'pd-item'; empty.style.color = '#888'; empty.style.justifyContent = 'center'; empty.textContent = '暂无选项'; panel.appendChild(empty);
+    }
+    document.body.appendChild(panel); _personDropdown = panel; window.__pdInput = input;
+    var rect = wrap.getBoundingClientRect(); var ph = Math.min(list.length * 36 + 10, 200); var top = rect.bottom + 2;
+    if(rect.bottom + ph > window.innerHeight && rect.top > ph) top = rect.top - ph - 2;
+    panel.style.top = top + 'px'; panel.style.left = rect.left + 'px'; panel.style.minWidth = rect.width + 'px'; panel.style.display = 'block';
+
+    setTimeout(function(){
+      document.addEventListener('click', function h(e){
+        if(!panel.contains(e.target) && e.target !== btn && !wrap.contains(e.target)){
+          panel.remove(); _personDropdown=null; window.__pdInput=null; document.removeEventListener('click', h);
+        }
+      });
+    }, 10);
+  };
+
+  window.personInputBlur = function(el, field){
+    var val = el.value.trim(); var tr = el.closest('tr'); if(!tr) return;
+    var id = tr.getAttribute('data-id'); var row = getRow(id); if(!row) return;
+    row[field] = val;
+    if(val){ if(field==='submitter') ensureInList(SUBMITTER_LIST, val); else if(field==='dept') ensureInList(DEPT_LIST, val); }
+    save();
+  };
+
+  // 多维度筛选：关键词 + 单位/部门 + 月份 + 付款状态
+  window.doSearch=function(){
+    var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+    var fDept=(document.getElementById('filterDept')||{}).value||'';
+    var fMon=(document.getElementById('filterMonth')||{}).value||'';
+    var fPay=(document.getElementById('filterPayment')||{}).value||'';
+    var trs=document.querySelectorAll('#tbody tr[data-id]');
+    var cnt=0, unpaidSum=0, paidSum=0;
+    for(var i=0;i<trs.length;i++){
+      var row = getRow(trs[i].getAttribute('data-id'));
+      if(!row) continue;
+      var searchableText = [
+        row.date, row.sampleId, row.submitter, row.dept, row.sampleStatus, 
+        row.storage, row.solvent, row.testItem, row.remark, row.priority, row.status,
+        row.paymentStatus||'未付款'
+      ].join(' ').toLowerCase();
+      var show = !kw || searchableText.indexOf(kw)!==-1;
+      if(show && fDept && row.dept !== fDept) show=false;
+      if(show && fMon && (row.date||'').slice(0,7) !== fMon) show=false;
+      if(show && fPay && (row.paymentStatus||'未付款') !== fPay) show=false;
+      trs[i].style.display=show?'':'none';
+      if(show){
+        cnt++;
+        var fee=calcRowFee(row);
+        if((row.paymentStatus||'未付款')==='已付款') paidSum+=fee; else unpaidSum+=fee;
+      }
+    }
+    var r=document.getElementById('searchResult');
+    if(r) r.textContent=kw?'关键词匹配 '+cnt+' 条':'';
+    var fr=document.getElementById('filterResult');
+    if(fr){
+      var parts=[];
+      if(cnt>0){ parts.push('显示 '+cnt+' 条'); parts.push('未付款 '+unpaidSum+' 元'); parts.push('已付款 '+paidSum+' 元'); parts.push('合计 '+(unpaidSum+paidSum)+' 元'); }
+      fr.textContent=parts.join('  |  ');
+    }
+    updateTotalFee();
+  };
+
+  // 动态填充筛选下拉选项（保留当前选中值）
+  function populateFilters(){
+    var deptSet={}, monthSet={};
+    DATA.forEach(function(r){
+      if(r.dept) deptSet[r.dept]=true;
+      if(r.date) monthSet[r.date.slice(0,7)]=true;
+    });
+    var deptSel=document.getElementById('filterDept');
+    var monSel=document.getElementById('filterMonth');
+    if(!deptSel||!monSel) return;
+    var deptVal=deptSel.value, monVal=monSel.value;
+    var deptOpts='<option value="">全部</option>';
+    var depts=Object.keys(deptSet).sort();
+    depts.forEach(function(d){ deptOpts+='<option value="'+esc(d)+'">'+esc(d)+'</option>'; });
+    deptSel.innerHTML=deptOpts; deptSel.value=deptVal;
+    var monOpts='<option value="">全部</option>';
+    var months=Object.keys(monthSet).sort().reverse();
+    months.forEach(function(m){ monOpts+='<option value="'+esc(m)+'">'+esc(m)+'</option>'; });
+    monSel.innerHTML=monOpts; monSel.value=monVal;
+  }
+
+  window.resetFilters=function(){
+    var si=document.getElementById('searchInput'); if(si) si.value='';
+    var fd=document.getElementById('filterDept'); if(fd) fd.value='';
+    var fm=document.getElementById('filterMonth'); if(fm) fm.value='';
+    var fp=document.getElementById('filterPayment'); if(fp) fp.value='';
+    doSearch();
+  };
+
+  // 修复：针对全字段应用的 CSV 逗号过滤函数（涵盖了漏掉的送样人与单位）
+  function buildCSVRows(rows){
+    return rows.map(function(r){
+      var adj=parseFloat(r.feeAdjust) || 0;
+      var adjStr=adj>0?'[+'+adj+'元]':adj<0?'[-'+Math.abs(adj)+'元折扣]':'';
+      var remarkWithAdj=(r.remark||'')+(adjStr?' '+adjStr:'');
+      var solventFee=getSolventPrice(r.solvent||'');
+      var testFee=getTestFee(r.testItem||'');
+      var totalFee=calcRowFee(r);
+      return [
+        safeCSV(r.date), safeCSV(r.sampleId), safeCSV(r.submitter), safeCSV(r.dept),
+        safeCSV(r.sampleStatus), safeCSV(r.storage), safeCSV(r.solvent),
+        safeCSV(solventFee>0?'+'+solventFee+'元':'免费'),
+        safeCSV((r.testItem||'').replace(/,/g,'、')),
+        safeCSV(testFee+'元'),
+        safeCSV(adj!==0?(adj>0?'+':'')+adj+'元':'无'),
+        safeCSV(totalFee+'元'),
+        safeCSV(r.priority||'正常'), safeCSV(r.status||'待测试'), safeCSV(r.paymentStatus||'未付款'), safeCSV(remarkWithAdj)
+      ].join(',');
+    });
+  }
+
+  function buildCSVSummary(rows){
+    var grandTotal=0, unpaidTotal=0, paidTotal=0;
+    rows.forEach(function(r){
+      var f=calcRowFee(r); grandTotal+=f;
+      if((r.paymentStatus||'未付款')==='已付款') paidTotal+=f; else unpaidTotal+=f;
+    });
+    function sumLine(label, val){
+      var arr=[]; for(var i=0;i<10;i++) arr.push('');
+      arr.push(safeCSV(label)); arr.push(safeCSV(val));
+      arr.push('','','','');
+      return arr.join(',');
+    }
+    return '\n'+sumLine('合计费用', grandTotal+'元')+'\n'+sumLine('未付款', unpaidTotal+'元')+'\n'+sumLine('已付款', paidTotal+'元');
+  }
+
+  var CSV_HEADER='日期,样品编号,送样人,单位/部门,样品状态,保存条件,溶剂/氘代试剂,溶剂费用,测试项目,测试费用,费用调整,费用合计,优先级,状态,付款状态,备注\n';
+
+  window.exportSelected=function(){
+    var cks=document.querySelectorAll('#tbody .ck:checked');
+    if(cks.length===0){alert('请先选择要导出的记录');return;}
+    var ids=[];
+    for(var i=0;i<cks.length;i++) ids.push(cks[i].getAttribute('data-id'));
+    var rows=ids.map(function(id){return getRow(id);}).filter(function(r){return r;});
+    if(rows.length===0){alert('未找到选中的记录');return;}
+    var BOM='\uFEFF';
+    var body=buildCSVRows(rows);
+    var summary=buildCSVSummary(rows);
+    var blob=new Blob([BOM+CSV_HEADER+body.join('\n')+summary],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='NMR_选中_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 导出当前筛选可见行（含汇总统计，适合月底与各单位/部门结算）
+  window.exportFiltered=function(){
+    var rows=[];
+    var trs=document.querySelectorAll('#tbody tr[data-id]');
+    for(var i=0;i<trs.length;i++){
+      if(trs[i].style.display!=='none'){
+        var row=getRow(trs[i].getAttribute('data-id'));
+        if(row) rows.push(row);
+      }
+    }
+    if(rows.length===0){alert('当前筛选结果为空，无可导出数据');return;}
+    var fDept=(document.getElementById('filterDept')||{}).value||'';
+    var fMon=(document.getElementById('filterMonth')||{}).value||'';
+    var fPay=(document.getElementById('filterPayment')||{}).value||'';
+    var nameParts=['NMR'];
+    if(fDept) nameParts.push(fDept);
+    if(fMon) nameParts.push(fMon);
+    if(fPay) nameParts.push(fPay);
+    nameParts.push(new Date().toISOString().slice(0,10));
+    var fname=nameParts.join('_')+'.csv';
+    var BOM='\uFEFF';
+    var body=buildCSVRows(rows);
+    var summary=buildCSVSummary(rows);
+    var blob=new Blob([BOM+CSV_HEADER+body.join('\n')+summary],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download=fname; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.toggleSelectAll=function(el){
+    var checked=el.checked;
+    var cks=document.querySelectorAll('#tbody .ck');
+    for(var i=0;i<cks.length;i++) {
+      if(cks[i].closest('tr').style.display !== 'none') cks[i].checked=checked;
+    }
+  };
+
+  function syncHeaderCk(){
+    var all=document.querySelectorAll('#tbody .ck');
+    var checked=document.querySelectorAll('#tbody .ck:checked');
+    // Fix 3: 只统计可见行
+    var visibleAll=0, visibleChecked=0;
+    for(var i=0;i<all.length;i++){
+      if(all[i].closest('tr').style.display!=='none') visibleAll++;
+    }
+    for(var j=0;j<checked.length;j++){
+      if(checked[j].closest('tr').style.display!=='none') visibleChecked++;
+    }
+    var hdr=document.querySelector('thead .col-ck input[type=checkbox]');
+    if(hdr){ hdr.checked=(visibleAll>0 && visibleAll===visibleChecked); }
+  };
+
+  window.exportCSV=function(){
+    var BOM='\uFEFF';
+    var body=buildCSVRows(DATA);
+    var summary=buildCSVSummary(DATA);
+    var blob=new Blob([BOM+CSV_HEADER+body.join('\n')+summary],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='NMR_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.showImport=function(){ document.getElementById('importModal').classList.add('active'); };
+  window.hideImport=function(){
+    document.getElementById('importModal').classList.remove('active');
+    document.getElementById('importText').value='';
+    document.getElementById('importFile').value='';
+  };
+  window.doImport=function(){
+    var txt=document.getElementById('importText').value.trim();
+    var fi=document.getElementById('importFile');
+    if(fi&&fi.files&&fi.files.length>0){
+      var reader=new FileReader();
+      reader.onload=function(e){ processImport(e.target.result); };
+      reader.readAsText(fi.files[0],'UTF-8');
+    } else if(txt){ processImport(txt); }
+    else alert('请粘贴数据或选择文件');
+  };
+
+  function processImport(text){
+    function normalizeDate(d){
+      if(!d) return new Date().toISOString().slice(0,10);
+      d = d.trim();
+      if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(d)) return d;
+      var m=/^(\d{4})[\/\-\\](\d{1,2})[\/\-\\](\d{1,2})/.exec(d);
+      if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+      m=/^(\d{1,2})[\/\-\\](\d{1,2})[\/\-\\](\d{4})/.exec(d);
+      if(m){
+        var a=parseInt(m[1]), b=parseInt(m[2]);
+        if(a>12){ return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
+        else { return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); }
+      }
+      if(/^\d+$/.test(d)){
+        var excelEpoch=new Date(1899,11,30);
+        var dDate=new Date(excelEpoch.getTime()+parseInt(d)*86400000);
+        return dDate.toISOString().slice(0,10);
+      }
+      return new Date().toISOString().slice(0,10);
+    }
+
+    var lines=text.split('\n').filter(function(l){return l.trim();});
+    if(lines.length>0){
+      var first=lines[0].split(/[\t,]/)[0].trim();
+      if(first.indexOf('日期')!==-1||first.indexOf('date')!==-1||first.indexOf('Date')!==-1) lines.shift();
+    }
+    var cnt=0;
+    lines.forEach(function(line){
+      var sep=line.indexOf('\t')!=-1?'\t':',';
+      var p=line.split(sep).map(function(s){return s.trim();});
+      if(p.length<3) return;
+      var dateStr=normalizeDate(p[0]);
+      var remark='', feeAdjust='';
+      var remarkCol=p.length>=11?p[10]:(p.length>=10?p[9]:'');
+      if(remarkCol){
+        var m=/\[([\+\-]?\d+元[折扣]*)\]$/.exec(remarkCol);
+        if(m){
+          remark=remarkCol.replace(/\[([\+\-]?\d+元[折扣]*)\]$/,'').trim();
+          var adjPart=m[1];
+          if(adjPart.indexOf('+')===0) feeAdjust=adjPart.replace(/[^+0-9]/g,'');
+          else if(adjPart.indexOf('-')===0||adjPart.indexOf('折扣')!==-1) feeAdjust='-'+adjPart.replace(/[^0-9]/g,'');
+        } else {
+          remark=remarkCol;
+        }
+      }
+      function normalizeImportTestItem(str){
+        if(!str) return '';
+        var items = str.split(/[，,、\/\+\n]/);
+        var nameMap = {
+          '1H': '1H谱(16ns)', '1H谱': '1H谱(16ns)', '1HNMR': '1H谱(16ns)', '1H-NMR': '1H谱(16ns)', 'HNMR': '1H谱(16ns)', 'H-NMR': '1H谱(16ns)',
+          '13C': '13C谱(512ns)', '13C谱': '13C谱(512ns)', '13CNMR': '13C谱(512ns)', '13C-NMR': '13C谱(512ns)', 'CNMR': '13C谱(512ns)', 'C-NMR': '13C谱(512ns)',
+          '19F': '19F谱(64ns)', '19F谱': '19F谱(64ns)', '19FNMR': '19F谱(64ns)', '19F-NMR': '19F谱(64ns)',
+          '31P': '31P谱(64ns)', '31P谱': '31P谱(64ns)', '31PNMR': '31P谱(64ns)', '31P-NMR': '31P谱(64ns)',
+          '11B': '11B谱(64ns)', '11B谱': '11B谱(64ns)', '11BNMR': '11B谱(64ns)', '11B-NMR': '11B谱(64ns)',
+          'DEPT45': 'DEPT45(512ns)', 'DEPT90': 'DEPT90(512ns)', 'DEPT135': 'DEPT135(512ns)', 'DEPT-135': 'DEPT135(512ns)',
+          'COSY': 'COSY (64ns)', 'HSQC': 'HSQC (512ns)', 'NOESY': 'NOESY (H-H)', 'HMBC': 'HMBC (H-C)'
+        };
+        var mapped = items.map(function(item){
+          var trimmed = item.trim();
+          var cleaned = trimmed.replace(/\s+/g, '').toUpperCase();
+          return nameMap[cleaned] || nameMap[trimmed] || trimmed;
+        });
+        mapped = mapped.filter(function(s){ return s && s !== '其他'; });
+        return mapped.join(',');
+      }
+
+      function normalizeImportSolvent(raw){
+        if(!raw) return '无溶剂';
+        var cleaned = raw.replace(/\s+/g, '').toUpperCase();
+        
+        var solventMap = {
+          // 无溶剂
+          '无溶剂': '无溶剂',
+          
+          // 氘代氯仿
+          '氘代氯仿': '氘代氯仿(CDCl₃)', 'CDCL₃': '氘代氯仿(CDCl₃)', 'CDCL3': '氘代氯仿(CDCl₃)', 'CHLOROFORM': '氘代氯仿(CDCl₃)',
+          
+          // 氘代二甲亚砜
+          '氘代二甲亚砜': '氘代二甲亚砜(DMSO-d₆)', 'DMSO': '氘代二甲亚砜(DMSO-d₆)', 'DMSO-D₆': '氘代二甲亚砜(DMSO-d₆)', 'DMSOD6': '氘代二甲亚砜(DMSO-d₆)',
+          
+          // 重水
+          '重水': '重水(D₂O)', 'D₂O': '重水(D₂O)', 'D2O': '重水(D₂O)', 'DEUTERIUMOXIDE': '重水(D₂O)',
+          
+          // 氘代丙酮
+          '氘代丙酮': '氘代丙酮(C₃D₆O)', 'C₃D₆O': '氘代丙酮(C₃D₆O)', 'C3D6O': '氘代丙酮(C₃D₆O)', 'ACETONE': '氘代丙酮(C₃D₆O)',
+          
+          // 氘代乙腈
+          '氘代乙腈': '氘代乙腈(CD₃CN-d₃)', 'CD₃CN': '氘代乙腈(CD₃CN-d₃)', 'CD3CN': '氘代乙腈(CD₃CN-d₃)', 'ACETONITRILE': '氘代乙腈(CD₃CN-d₃)',
+          
+          // 氘代乙酸
+          '氘代乙酸': '氘代乙酸(CD₃COOH-d₄)', 'CD₃COOH': '氘代乙酸(CD₃COOH-d₄)', 'CD3COOH': '氘代乙酸(CD₃COOH-d₄)', 'ACETICACID': '氘代乙酸(CD₃COOH-d₄)',
+          
+          // 氘代盐酸
+          '氘代盐酸': '氘代盐酸(DCl)', 'DCL': '氘代盐酸(DCl)', 'DEUTERIUMCHLORIDE': '氘代盐酸(DCl)',
+          
+          // 氘代吡啶
+          '氘代吡啶': '氘代吡啶(Py-d₅)', 'PY-D₅': '氘代吡啶(Py-d₅)', 'PYD5': '氘代吡啶(Py-d₅)', 'PYRIDINE': '氘代吡啶(Py-d₅)',
+          
+          // 氘代三氟乙酸
+          '氘代三氟乙酸': '氘代三氟乙酸(CF₃COOD)', 'CF₃COOD': '氘代三氟乙酸(CF₃COOD)', 'CF3COOD': '氘代三氟乙酸(CF₃COOD)', 'TFA': '氘代三氟乙酸(CF₃COOD)'
+        };
+        
+        // 尝试精确匹配
+        if(solventMap[raw]) return solventMap[raw];
+        
+        // 尝试清洗后匹配
+        if(solventMap[cleaned]) return solventMap[cleaned];
+        
+        // 尝试部分匹配（包含关键词）
+        for(var key in solventMap){
+          if(raw.indexOf(key) !== -1 || cleaned.indexOf(key.toUpperCase()) !== -1){
+            return solventMap[key];
+          }
+        }
+        
+        // 都没匹配到，返回原值
+        return raw;
+      }
+
+      var row={
+        id:genId(),
+        date:dateStr, sampleId:p[1]||'', submitter:p[2]||'', dept:p[3]||'',
+        sampleStatus:p[4]||'固体', storage:p[5]||'室温', solvent:normalizeImportSolvent(p[6]),
+        testItem:normalizeImportTestItem(p[7]), priority:p.length>=9?p[8]:'正常', status:p.length>=10?p[9]:'已测试',
+        paymentStatus: p.length>=11 ? (p[10]||'未付款') : '未付款',
+        remark:remark, feeAdjust:feeAdjust, createdAt:new Date().toISOString()
+      };
+      DATA.push(row); cnt++;
+    });
+    save(); render(); hideImport(); alert('导入 '+cnt+' 条');
+  }
+
+  var STATS_OPEN = false;
+  window.toggleStatsPanel = function(){
+    STATS_OPEN = !STATS_OPEN;
+    var body = document.getElementById('statsBody');
+    var toggle = document.getElementById('statsToggle');
+    if(STATS_OPEN){
+      body.classList.add('open'); toggle.textContent = '收起 ▴'; renderStats();
+    } else {
+      body.classList.remove('open'); toggle.textContent = '展开 ▾';
+    }
+  };
+
+  function buildStats(){
+    var months = {};
+    DATA.forEach(function(r){
+      var dateStr = r.date || ''; if(!dateStr) return;
+      var month = dateStr.slice(0,7);
+      if(!months[month]) months[month] = { total: 0, depts: {} };
+      var fee = calcRowFee(r); months[month].total += fee;
+      var dept = r.dept || '未填写';
+      if(!months[month].depts[dept]) months[month].depts[dept] = 0;
+      months[month].depts[dept] += fee;
+    });
+    var arr = [];
+    for(var m in months){ arr.push({ month: m, total: months[m].total, depts: months[m].depts }); }
+    arr.sort(function(a,b){ return b.month.localeCompare(a.month); });
+    return arr;
+  }
+
+  function renderStats(){
+    var container = document.getElementById('statsContent'); if(!container) return;
+    var stats = buildStats();
+    if(stats.length === 0){ container.innerHTML = '<div class="stats-empty">暂无数据，无法统计费用</div>'; return; }
+    var grandTotal = 0; var html = '';
+    stats.forEach(function(s, idx){
+      grandTotal += s.total;
+      var depts = [];
+      for(var d in s.depts){ depts.push({ name: d, fee: s.depts[d] }); }
+      depts.sort(function(a,b){ return b.fee - a.fee; });
+      var mid = 'stats-month-' + idx;
+      html += '<div class="stats-month"><div class="stats-month-header" onclick="toggleMonth(\'' + mid + '\')">';
+      html += '<span class="stats-month-name">' + s.month + ' 月</span><span class="stats-month-total">合计：' + s.total + ' 元</span></div>';
+      html += '<div class="stats-month-body" id="' + mid + '">';
+      depts.forEach(function(dp){
+        html += '<div class="stats-dept-row"><span class="stats-dept-name">' + esc(dp.name) + '</span><span class="stats-dept-fee">' + dp.fee + ' 元</span></div>';
+      });
+      html += '</div></div>';
+    });
+    html += '<div class="stats-grand-total"><span class="stats-grand-label">全部累计</span><span class="stats-grand-value">' + grandTotal + ' 元</span></div>';
+    container.innerHTML = html;
+  }
+
+  window.toggleMonth = function(id){
+    var el = document.getElementById(id); if(el) el.classList.toggle('open');
+  };
+
+  function init(){
+    loadPersonLists();
+    if(USE_API){
+      fetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+          DATA=res.data;
+          DATA.forEach(function(r){
+            if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
+            if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
+            if(r.feeAdjust===undefined) r.feeAdjust=''; if(r.priority===undefined) r.priority='正常';
+            if(r.status===undefined) r.status='待测试';
+            delete r.extraMinutes; 
+            if(SOLVENT_MAP[r.solvent]) r.solvent = SOLVENT_MAP[r.solvent];
+            var oldMap={'1H NMR':'1H谱(16ns)','13C NMR':'13C谱(512ns)','19F NMR':'19F谱(64ns)','31P NMR':'31P谱(64ns)','11B NMR':'11B谱(64ns)','DEPT-135':'DEPT135(512ns)','COSY':'COSY (64ns)','HSQC':'HSQC (512ns)','NOESY':'NOESY (H-H)','HMBC':'HMBC (H-C)','2D NMR':'COSY (64ns)'};
+            var nsMap={'1H':'1H谱(16ns)','1H谱':'1H谱(16ns)','13C':'13C谱(512ns)','13C谱':'13C谱(512ns)','19F':'19F谱(64ns)','19F谱':'19F谱(64ns)','31P':'31P谱(64ns)','31P谱':'31P谱(64ns)','11B':'11B谱(64ns)','11B谱':'11B谱(64ns)','DEPT45':'DEPT45(512ns)','DEPT90':'DEPT90(512ns)','DEPT135':'DEPT135(512ns)','COSY (H-H)':'COSY (64ns)','HSQC (H-C)':'HSQC (512ns)'};
+            var allMap={}; for(var k in oldMap) allMap[k]=oldMap[k]; for(var k in nsMap) allMap[k]=nsMap[k];
+            if(r.testItem){
+              var parts=r.testItem.split(','); var normalized=[];
+              for(var p=0;p<parts.length;p++){
+                var item=parts[p].trim(); if(!item) continue;
+                if(allMap[item]) item=allMap[item];
+                if(normalized.indexOf(item)===-1) normalized.push(item);
+              }
+              r.testItem=normalized.join(',');
+            }
+          });
+          render();
+        } else { USE_API=false; DATA=loadLocal(); render(); }
+      }).catch(function(){ USE_API=false; DATA=loadLocal(); render(); });
+    } else { DATA=loadLocal(); render(); }
+  }
+
+  function loadLocal(){
+    try{
+      var raw=localStorage.getItem('nmrData'); if(!raw) return [];
+      var d=JSON.parse(raw); if(!Array.isArray(d)) return [];
+      d.forEach(function(r){
+        if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
+        if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
+        if(r.feeAdjust===undefined) r.feeAdjust=''; if(r.priority===undefined) r.priority='正常';
+        if(r.status===undefined) r.status='待测试';
+        delete r.extraMinutes; // 确保清理老数据的幽灵字段
+        if(SOLVENT_MAP[r.solvent]) r.solvent = SOLVENT_MAP[r.solvent];
+        var oldMap2={'1H NMR':'1H谱(16ns)','13C NMR':'13C谱(512ns)','19F NMR':'19F谱(64ns)','31P NMR':'31P谱(64ns)','11B NMR':'11B谱(64ns)','DEPT-135':'DEPT135(512ns)','COSY':'COSY (64ns)','HSQC':'HSQC (512ns)','NOESY':'NOESY (H-H)','HMBC':'HMBC (H-C)','2D NMR':'COSY (64ns)'};
+        var nsMap2={'1H':'1H谱(16ns)','1H谱':'1H谱(16ns)','13C':'13C谱(512ns)','13C谱':'13C谱(512ns)','19F':'19F谱(64ns)','19F谱':'19F谱(64ns)','31P':'31P谱(64ns)','31P谱':'31P谱(64ns)','11B':'11B谱(64ns)','11B谱':'11B谱(64ns)','DEPT45':'DEPT45(512ns)','DEPT90':'DEPT90(512ns)','DEPT135':'DEPT135(512ns)','COSY (H-H)':'COSY (64ns)','HSQC (H-C)':'HSQC (512ns)'};
+        var allMap2={}; for(var k2 in oldMap2) allMap2[k2]=oldMap2[k2]; for(var k2 in nsMap2) allMap2[k2]=nsMap2[k2];
+        if(r.testItem){
+          var parts2=r.testItem.split(','); var normalized2=[];
+          for(var p2=0;p2<parts2.length;p2++){
+            var item2=parts2[p2].trim(); if(!item2) continue;
+            if(allMap2[item2]) item2=allMap2[item2];
+            if(normalized2.indexOf(item2)===-1) normalized2.push(item2);
+          }
+          r.testItem=normalized2.join(',');
+        }
+      });
+      return d;
+    }catch(e){return [];}
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+</script>
+</body>
+</html>

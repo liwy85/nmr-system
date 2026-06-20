@@ -1,0 +1,7 @@
+# 忽略 node_modules
+node_modules/
+# 忽略数据文件（部署时自动生成）
+data.json
+# 忽略日志
+*.log
+npm-debug.log*

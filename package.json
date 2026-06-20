@@ -1,0 +1,16 @@
+{
+  "name": "nmr-system",
+  "version": "1.0.0",
+  "description": "NMR 核磁测试登记表在线系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
