@@ -1454,8 +1454,23 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
     loadPersonLists();
     if(USE_API){
       apiFetch(API+'/api/rows').then(function(r){return r.json();}).then(function(res){
-        if(res.success){
-          DATA=res.data;
+        // 兼容两种格式：裸数组 [...] 或 {success:true, data:[...]}
+        var rows=null;
+        if(Array.isArray(res)){ rows=res; }
+        else if(res && res.success && Array.isArray(res.data)){ rows=res.data; }
+        if(rows){
+          // 服务器无数据但本地有数据时，把本地数据上传到服务器
+          if(rows.length===0){
+            var localData=loadLocal();
+            if(localData.length>0){
+              DATA=localData;
+              try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
+              render();
+              save(); // 上传本地数据到服务器
+              return;
+            }
+          }
+          DATA=rows;
           DATA.forEach(function(r){
             if(r.sampleId===undefined) r.sampleId=''; if(r.sampleStatus===undefined) r.sampleStatus='固体';
             if(r.storage===undefined) r.storage=''; if(r.testItem===undefined) r.testItem='';
@@ -1476,6 +1491,7 @@ tr.add-row:hover td { background:transparent !important; color:#4a148c !importan
               r.testItem=normalized.join(',');
             }
           });
+          try{ localStorage.setItem('nmrData', JSON.stringify(DATA)); }catch(e){}
           render();
         } else { USE_API=false; DATA=loadLocal(); render(); }
       }).catch(function(){ USE_API=false; DATA=loadLocal(); render(); });
